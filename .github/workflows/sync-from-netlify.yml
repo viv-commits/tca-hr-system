@@ -1,0 +1,50 @@
+name: Sync from Netlify Live Site
+
+on:
+  schedule:
+    # Runs daily at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch live files from Netlify
+        run: |
+          SITE="https://app.thecareadvantage.com"
+          FILES=(
+            "index.html"
+            "tca-onboarding-module.js"
+            "tca-admin-module.js"
+            "tca-training-module.js"
+            "tca-audit-module.js"
+            "tca-invoice-module.js"
+            "tca-safer-recruitment-module.js"
+            "tca-documents-module.js"
+            "tca-onedrive-backup.js"
+            "tca-rota-module.js"
+          )
+          for f in "${FILES[@]}"; do
+            echo "Fetching $f"
+            curl -fsSL "$SITE/$f" -o "$f.new"
+            mv "$f.new" "$f"
+          done
+
+      - name: Commit changes if any
+        run: |
+          git config user.name "tca-sync-bot"
+          git config user.email "sync@thecareadvantage.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "Auto-sync: pull latest from live site ($(date -u +%Y-%m-%d))"
+            git push
+            echo "Changes committed."
+          else
+            echo "No changes detected."
+          fi
