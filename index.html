@@ -272,7 +272,6 @@ td{padding:9px 10px;vertical-align:middle;white-space:nowrap}
   <div class="hdr-right">
     <span id="conn-status" class="hdr-chip" style="background:rgba(107,114,128,.1);border:.5px solid rgba(107,114,128,.2);color:rgba(255,255,255,.4)">○ Loading…</span>
     <span class="hdr-chip ind" id="hdr-count">0 staff</span>
-    <div id="onedrive-backup-badge"></div>
     <span class="hdr-date" id="hdr-date"></span>
     <div class="avatar" onclick="signOut()" title="Sign out">VS</div>
   </div>
@@ -315,11 +314,7 @@ td{padding:9px 10px;vertical-align:middle;white-space:nowrap}
     <div class="sb-item" id="sb-home-Cambria" onclick="setLocFromSidebar('Cambria')"><span class="sb-icon">⌂</span>Cambria <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,.2)" id="sb-cnt-Cambria">0</span></div>
 
     <div class="sb-footer">
-      <div class="backup-card" id="sidebar-backup-status">
-        <div class="bc-label">OneDrive Backup</div>
-        <div class="bc-val" id="bc-status">Not connected</div>
-        <div class="bc-sub" id="bc-sub">Click Connect OneDrive</div>
-      </div>
+      
     </div>
   </nav>
 
@@ -1145,10 +1140,20 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // Supabase mode — no local file banner needed
 
 async function signOut() {
-  const { createClient } = supabase;
-  const _sc = createClient('https://vhebrkhdgeiyxkpphlut.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoZWJya2hkZ2VpeXhrcHBobHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTIyMjQsImV4cCI6MjA5MDI4ODIyNH0.8ux8cztStNiGEt1fRsVZYubhE2inx24iQaCiZdQV3lk');
-  await _sc.auth.signOut();
-  /* removed */;
+  if (!confirm('Sign out of TCA HR Compliance System?')) return;
+  try {
+    if (window.supabase && window.supabase.auth) {
+      await window.supabase.auth.signOut();
+    }
+  } catch(e) { console.warn('signOut error', e); }
+  try {
+    // Clear any TCA / Supabase session data
+    Object.keys(localStorage).forEach(k => {
+      if (/^(sb-|supabase|tca)/i.test(k)) localStorage.removeItem(k);
+    });
+    sessionStorage.clear();
+  } catch(e) {}
+  location.reload();
 }
 
 document.getElementById('hdr-date').textContent=TODAY.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
@@ -1221,178 +1226,7 @@ document.getElementById('hdr-date').textContent=TODAY.toLocaleDateString('en-GB'
   if (sub) sub.textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ' · All homes · Active staff';
 })();
 </script>
-<script src="tca-onedrive-backup.js"></script>
-<script>
-// Update sidebar backup card from OneDrive badge state
-setInterval(function() {
-  const token = localStorage.getItem('tca_onedrive_token');
-  const lastBackup = localStorage.getItem('tca_last_onedrive_backup');
-  const bcStatus = document.getElementById('bc-status');
-  const bcSub = document.getElementById('bc-sub');
-  if (!bcStatus) return;
-  if (token) {
-    bcStatus.textContent = '✓ Connected';
-    bcStatus.style.color = '#4ade80';
-    if (lastBackup) {
-      const d = new Date(parseInt(lastBackup));
-      const next = new Date(parseInt(lastBackup) + 7*24*60*60*1000);
-      bcSub.textContent = 'Next: ' + next.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-    } else {
-      bcSub.textContent = 'First backup pending';
-    }
-  } else {
-    bcStatus.textContent = 'Not connected';
-    bcStatus.style.color = 'rgba(255,255,255,0.3)';
-    bcSub.textContent = 'Click Connect OneDrive';
-  }
-}, 1000);
 
-let _supStaffId=null;
-async function loadSupervisions(staffId){_supStaffId=staffId;var tbody=document.getElementById('sup-tbody');if(!tbody)return;tbody.innerHTML='<tr><td colspan="4" style="padding:12px 10px;color:var(--text-muted);font-style:italic;">Loading...</td></tr>';try{var recs=await sbFetch('supervisions?staff_id=eq.'+staffId+'&order=supervision_date.desc&select=*','GET');var list=Array.isArray(recs)?recs:[];renderSupervisions(list);updateSupervisionStatus(list);}catch(err){console.error('loadSupervisions:',err);var tb2=document.getElementById('sup-tbody');if(tb2)tb2.innerHTML='<tr><td colspan="4" style="padding:8px 10px;color:var(--red);">Error loading.</td></tr>';}}
-function renderSupervisions(records){var tbody=document.getElementById('sup-tbody');if(!tbody)return;if(!records.length){tbody.innerHTML='<tr><td colspan="4" style="padding:12px 10px;color:var(--text-muted);font-style:italic;">No supervisions recorded yet.</td></tr>';return;}tbody.innerHTML=records.map(function(r){var d=r.supervision_date?new Date(r.supervision_date+'T00:00:00').toLocaleDateString('en-GB'):'–';var by=(r.conducted_by||'–').replace(/</g,'&lt;').replace(/>/g,'&gt;');var n=(r.notes||'–').replace(/</g,'&lt;').replace(/>/g,'&gt;');return'<tr style="border-bottom:1px solid var(--border);">'+'<td style="padding:8px 10px;white-space:nowrap;">'+d+'</td>'+'<td style="padding:8px 10px;">'+by+'</td>'+'<td style="padding:8px 10px;color:var(--text-muted);">'+n+'</td>'+'<td style="padding:8px 10px;text-align:right;"><button type="button" onclick="deleteSupervision(\''+r.id+'\')" style="font-size:11px;padding:3px 8px;border:1px solid var(--red);background:var(--red-soft);color:var(--red);border-radius:4px;cursor:pointer;">✕</button></td>'+'</tr>';}).join('');}
-function updateSupervisionStatus(records){var banner=document.getElementById('sup-status-banner');if(!banner)return;if(!records.length){banner.style.display='block';banner.style.background='var(--red-soft)';banner.style.color='var(--red)';banner.style.borderColor='#fca5a5';banner.textContent='⚠ No supervision on record — overdue';return;}var sorted=records.slice().sort(function(a,b){return new Date(b.supervision_date)-new Date(a.supervision_date);});var lastDate=new Date(sorted[0].supervision_date+'T00:00:00');var today=new Date();var daysSince=Math.floor((today-lastDate)/86400000);var dueIn=28-daysSince;var nextDue=new Date(lastDate.getTime()+28*86400000);var nextDueStr=nextDue.toLocaleDateString('en-GB');banner.style.display='block';if(daysSince>28){banner.style.background='var(--red-soft)';banner.style.color='var(--red)';banner.style.borderColor='#fca5a5';banner.textContent='⚠ Overdue by '+(daysSince-28)+' day'+(daysSince-28===1?'':'s')+' — was due '+nextDueStr;}else if(daysSince>21){banner.style.background='#fffbeb';banner.style.color='#92400e';banner.style.borderColor='#fde68a';banner.textContent='⚡ Due in '+dueIn+' day'+(dueIn===1?'':'s')+' — next supervision by '+nextDueStr;}else{banner.style.background='#f0fdf4';banner.style.color='#166534';banner.style.borderColor='#86efac';banner.textContent='✓ Up to date — next due '+nextDueStr+' ('+dueIn+' days)';}}
-async function addSupervision(){if(!_supStaffId){toast('No staff selected');return;}var dateVal=document.getElementById('sup-date-input').value;if(!dateVal){toast('Please enter a supervision date');return;}var by=document.getElementById('sup-conducted-by').value.trim();var notes=document.getElementById('sup-notes-input').value.trim();try{await sbFetch('supervisions','POST',{staff_id:_supStaffId,org_id:ORG_ID,supervision_date:dateVal,conducted_by:by||null,notes:notes||null});document.getElementById('sup-date-input').value='';document.getElementById('sup-conducted-by').value='';document.getElementById('sup-notes-input').value='';toast('Supervision added');loadSupervisions(_supStaffId);}catch(err){console.error('addSupervision:',err);toast('Error saving supervision');}}
-async function deleteSupervision(supId){if(!confirm('Delete this supervision record?'))return;try{await sbFetch('supervisions?id=eq.'+supId,'DELETE');toast('Supervision deleted');loadSupervisions(_supStaffId);}catch(err){console.error('deleteSupervision:',err);toast('Error deleting supervision');}}
-
-
-// ═══════════════════════════════════════════════════════════
-// SUPERVISION DASHBOARD — Manager view across all homes
-// ═══════════════════════════════════════════════════════════
-
-// Cache: { staffId: { last: 'YYYY-MM-DD', nextDue: 'YYYY-MM-DD' } }
-window.SUPERVISION_MAP = {};
-
-async function loadSupervisionMap() {
-  try {
-    const rows = await sbFetch('supervisions?org_id=eq.TCA&select=staff_id,supervision_date&order=supervision_date.desc');
-    const map = {};
-    rows.forEach(r => {
-      if (!map[r.staff_id]) {
-        // First row is most recent (ordered desc)
-        const last = r.supervision_date;
-        const d = new Date(last);
-        d.setDate(d.getDate() + 28);
-        const nextDue = d.toISOString().split('T')[0];
-        map[r.staff_id] = { last, nextDue };
-      }
-    });
-    window.SUPERVISION_MAP = map;
-  } catch(e) {
-    console.warn('Could not load supervision map:', e);
-    window.SUPERVISION_MAP = {};
-  }
-}
-
-function renderSupervisionsView() {
-  const tbody = document.getElementById('tbody-supervisions');
-  if (!tbody) return;
-  const rows = filtered();
-  if (!rows.length) return;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const fmtDate = d => { if(!d) return '—'; const [y,m,dy]=d.split('-'); return dy+'/'+m+'/'+y; };
-  tbody.innerHTML = rows.map(s => {
-    const rec = window.SUPERVISION_MAP && window.SUPERVISION_MAP[s.id];
-    let lastStr = '—', nextStr = '—', statusHtml = '', daysNum = 0;
-    if (rec) {
-      lastStr = fmtDate(rec.last);
-      nextStr = fmtDate(rec.nextDue);
-      const nextDate = new Date(rec.nextDue);
-      const diff = Math.ceil((nextDate - today) / 86400000);
-      daysNum = diff;
-      if (diff < 0) {
-        statusHtml = '<span style="background:#fef2f2;color:#dc2626;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500">⚠ ' + Math.abs(diff) + 'd overdue</span>';
-      } else if (diff <= 7) {
-        statusHtml = '<span style="background:#fffbeb;color:#b45309;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500">⏰ Due in ' + diff + 'd</span>';
-      } else {
-        statusHtml = '<span style="background:#f0fdf4;color:#166534;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500">✓ Due ' + fmtDate(rec.nextDue) + '</span>';
-      }
-    } else {
-      statusHtml = '<span style="background:#fef2f2;color:#dc2626;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500">⚠ No record</span>';
-      daysNum = 99999;
-    }
-    const isLeaver = s.status && s.status.toLowerCase().includes('left');
-    return '<tr style="' + (isLeaver ? 'opacity:0.5;' : '') + '">' +
-      '<td class="name-cell" style="cursor:pointer;color:var(--accent)" onclick="openForm(' + s.id + ')" title="Click to open Supervisions tab">' + s.name + (isLeaver ? '<span style="margin-left:6px;font-size:9px;background:#fee2e2;color:#c0392b;padding:1px 5px;border-radius:3px;font-weight:600">LEFT</span>' : '') + '</td>' +
-      '<td style="font-size:11px;color:var(--text-muted)">' + (s.loc || '—') + '</td>' +
-      '<td>' + contractBadge(s.contract) + '</td>' +
-      '<td style="font-size:11px;font-family:monospace;color:var(--text-muted)">' + lastStr + '</td>' +
-      '<td style="font-size:11px;font-family:monospace;color:var(--text-muted)">' + nextStr + '</td>' +
-      '<td>' + statusHtml + '</td>' +
-      '<td><button class="action-btn" onclick="openForm(' + s.id + ')">&#9998; Log</button></td>' +
-      '</tr>';
-  }).join('');
-}
-
-
-// ═══════════════════════════════════════════
-// ONBOARDING TAB in staff profile form
-// ═══════════════════════════════════════════
-function loadOnboardingTab(staffId) {
-  var panel = document.getElementById('ob-profile-panel');
-  var statusEl = document.getElementById('ob-profile-status');
-  var actionsEl = document.getElementById('ob-profile-actions');
-  if (!panel || !statusEl || !actionsEl) return;
-  statusEl.innerHTML = '<span style="color:#94a3b8;font-size:12px">Checking onboarding record...</span>';
-  actionsEl.innerHTML = '';
-  sbFetch('onboarding_checklists?staff_id=eq.' + staffId + '&select=id,staff_name,progress,status,staff_id,checklist_data').catch(function(){var s=STAFF&&STAFF.find(function(x){return x.id===staffId;});var nm=s?encodeURIComponent(s.name):'';return sbFetch('onboarding_checklists?staff_name=eq.' + nm + '&select=id,staff_name,progress,status,checklist_data');})
-    .then(function(rows) {
-      if (!rows || !rows.length) {
-        statusEl.innerHTML = '<div style="color:#64748b;font-size:12px;margin-bottom:10px">No onboarding checklist linked to this staff member.</div>';
-        var linkBtn = document.createElement('button');
-        linkBtn.className = 'action-btn';
-        linkBtn.style.cssText = 'background:#3b5bdb;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px';
-        linkBtn.innerHTML = '&#128203; Create &amp; link onboarding checklist';
-        linkBtn.onclick = function() {
-          closeForm();
-          if (typeof showPage === 'function') showPage('onboarding', null);
-          setTimeout(function() {
-            if (typeof obShowTab === 'function') obShowTab('new', String(staffId));
-          }, 300);
-        };
-        actionsEl.appendChild(linkBtn);
-        return;
-      }
-      var rec = rows[0];
-      var pct = rec.progress || 0;
-      var color = pct === 100 ? '#0ca678' : pct > 0 ? '#e67700' : '#64748b';
-      var label = pct === 100 ? 'Cleared to Start' : pct > 0 ? 'In Progress' : 'Not Started';
-      statusEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-        '<div style="flex:1;min-width:160px">' +
-        '<div style="background:#f1f5f9;border-radius:8px;height:8px;overflow:hidden;margin-bottom:4px">' +
-        '<div style="background:' + color + ';height:8px;width:' + pct + '%"></div></div>' +
-        '<span style="font-size:11px;color:#64748b">' + pct + '% complete &nbsp;|&nbsp; </span>' +
-        '<span style="font-size:11px;font-weight:600;color:' + color + '">' + label + '</span>' +
-        '</div></div>';
-      var btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px';
-      var viewBtn = document.createElement('button');
-      viewBtn.className = 'action-btn';
-      viewBtn.style.cssText = 'background:#3b5bdb;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px';
-      viewBtn.innerHTML = '&#128203; View checklist';
-      viewBtn.onclick = function() {
-        closeForm();
-        if (typeof showPage === 'function') showPage('onboarding', null);
-        setTimeout(function() { if (typeof obOpenChecklist === 'function') obOpenChecklist(rec.id); }, 300);
-      };
-      var syncBtn2 = document.createElement('button');
-      syncBtn2.className = 'action-btn';
-      syncBtn2.style.cssText = 'background:#0ca678;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px';
-      syncBtn2.innerHTML = '&#128259; Sync checklist now';
-      syncBtn2.onclick = function() {
-        if (typeof window.obAutoSync === 'function') {
-          window.obAutoSync(staffId);
-          setTimeout(function() { loadOnboardingTab(staffId); }, 1000);
-          if (typeof toast === 'function') toast('Syncing checklist from staff profile...');
-        }
-      };
-      btnRow.appendChild(viewBtn);
-      btnRow.appendChild(syncBtn2);
-      actionsEl.appendChild(btnRow);
-    }).catch(function() {
-      statusEl.innerHTML = '<span style="color:#94a3b8;font-size:12px">Could not load onboarding data.</span>';
-    });
-}
-</script>
 
   <script src="tca-invoice-module.js"></script>
 <script src="tca-onboarding-module.js">
