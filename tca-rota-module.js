@@ -446,7 +446,7 @@
     const isManager = (_rUserRole==='admin'||_rUserRole==='rm'||_rUserRole==='registered_manager'||_rUserRole==='deputy_manager');
     const SHIFT_LABELS = {E:'Early',D:'Day',L:'Late',N:'Night',S:'Sleep',W:'WakeN',A:'AL',T:'Train',O:'Sick'};
     const SH = {E:12,D:12,L:8,N:10,S:10,W:10,A:0,T:8,O:0,'':0};
-    const RATE_KEYS = {E:'rate_e',D:'rate_d',L:'rate_l',N:'rate_n',S:'rate_s',W:'rate_w',T:'rate_t'};
+    const RATE_KEYS = {E:'rate_e',D:'rate_d',L:'rate_l',N:'rate_n',S:'rate_s',W:'rate_w',T:'rate_t',X:'rate_x'};
     const monthName = d.toLocaleString('en-GB',{month:'long',year:'numeric'});
     let ratesMap = window._payRatesCache || {};
     if(isManager) { try { ratesMap = await tcaLoadPayRates(home); } catch(e){} }
@@ -519,8 +519,8 @@
     if(!staff.length){showToast('No staff loaded','#dc3545');return;}
     showToast('Loading pay rates...','#1C3D6E');
     const ratesMap=await tcaLoadPayRates(window._rotaCurrentHome||'');
-    const SK=['base_rate','E','D','L','N','S','W','T'];
-    const SN={base_rate:'Base/Hr',E:'Early',D:'Day',L:'Late',N:'Night',S:'Sleep-in',W:'Wake Night',T:'Training'};
+    const SK=['base_rate','E','D','L','N','S','W','T','X'];
+    const SN={base_rate:'Base/Hr',E:'Early',D:'Day',L:'Late',N:'Night',S:'Sleep-in',W:'Wake Night',T:'Training',X:'Taxi'};
     const hdrCells=SK.map(k=>'<th style="padding:6px 8px;font-size:10px;text-align:center;background:#f5f5f5;color:#555;white-space:nowrap">'+SN[k]+'</th>').join('');
     const rowsHtml=staff.map(function(sv){
       const r=ratesMap[sv.id]||{};
