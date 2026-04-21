@@ -16,6 +16,7 @@
     {key:'W',label:'Wake Night',bg:'#f8d7da',tc:'#721c24',ts:'22:00',te:'08:00'},
     {key:'A',label:'Annual Leave',bg:'#fce4ec',tc:'#880e4f',ts:'',te:''},
     {key:'T',label:'Training',bg:'#e3f2fd',tc:'#0d47a1',ts:'',te:''},
+    {key:'X',label:'Taxi',bg:'#fff3e0',tc:'#5d4037',ts:'',te:''},
     {key:'O',label:'Off Sick',bg:'#ffebee',tc:'#b71c1c',ts:'',te:''}
   ];
   let SHIFTS=[...DEFAULT_SHIFTS];
@@ -402,7 +403,7 @@
   // TCA PAYROLL HELPERS v1.0 — Monthly hours & payroll summary
   // ============================================================
   function tcaCalcHours(staffId, y, m) {
-    const SHIFT_HOURS = {E:12,D:12,L:8,N:10,S:10,W:10,A:0,T:8,O:0,'':0};
+    const SHIFT_HOURS = {E:12,D:12,L:8,N:10,S:10,W:10,A:0,T:8,X:0,O:0,'':0};
     const data = window._rotaData || {};
     let totalMins = 0, counts = {};
     const days = new Date(y, m+1, 0).getDate();
@@ -462,7 +463,7 @@
           const hrs = SH[k]||0;
           const rk = RATE_KEYS[k];
           const rate = rk ? (parseFloat(r[rk])||parseFloat(r.base_rate)||0) : (parseFloat(r.base_rate)||0);
-          estPay += rate * hrs * counts[k];
+          estPay += (k==='T'||k==='X') ? (rate * counts[k]) : (rate * hrs * counts[k]);
         });
         totalAllPay += estPay;
       }
