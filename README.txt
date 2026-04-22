@@ -121,3 +121,6 @@ These module files make those changes PERMANENT - they will survive
 page reloads and work for all staff on any device.
 
 Contact your web developer with this README to implement the Supabase fixes.
+
+
+# Linked to Netlify via GitHub on 22/04/2026
