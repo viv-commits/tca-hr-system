@@ -4,7 +4,7 @@ var SB_URL='https://vhebrkhdgeiyxkpphlut.supabase.co';
 var _obPreSelectStaffId=null;
 function sbq(path,opts){
   var k=(typeof SUPABASE_KEY!=='undefined')?SUPABASE_KEY:'';
-  var ar=localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token');
+  var ar=(sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'));
   var t=k;try{t=JSON.parse(ar).access_token;}catch(e){}
   var h={'Content-Type':'application/json','apikey':k,'Authorization':'Bearer '+t};
   return fetch(SB_URL+path,Object.assign({headers:h},opts));
@@ -12,7 +12,7 @@ function sbq(path,opts){
 function gv(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function fmtDate(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('en-GB');}
 function todayISO(){return new Date().toISOString().split('T')[0];}
-function getToken(){try{return JSON.parse(localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')).access_token;}catch(e){return (typeof SUPABASE_KEY!=='undefined'?SUPABASE_KEY:'');}}
+function getToken(){try{return JSON.parse((sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'))).access_token;}catch(e){return (typeof SUPABASE_KEY!=='undefined'?SUPABASE_KEY:'');}}
 function getKey(){return (typeof SUPABASE_KEY!=='undefined')?SUPABASE_KEY:'';}
 function sbPatch(id,payload){
   return fetch(SB_URL+'/rest/v1/onboarding_checklists?id=eq.'+id,{
@@ -183,7 +183,7 @@ window.obShowNewForm=function(container){
   });
   h+='<div><label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:4px">OVERSEAS APPLICANT?</label>';
   h+='<select id="ob-overseas" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem;box-sizing:border-box"><option value="no">No</option><option value="yes">Yes</option></select></div>';
-  h+='<div><label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:4px">LINK TO STAFF PROFILE (optional — enables auto-sync)</label>';
+  h+='<div><label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:4px">LINK TO STAFF PROFILE (optional â enables auto-sync)</label>';
   h+='<select id="ob-staff-id" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem;box-sizing:border-box" onchange="obAutoFillFromStaff(this.value)">';
   h+='<option value="">-- Select staff member to link --</option>';
   if(window.STAFF&&window.STAFF.length){var _obHomes=window._tcaUserHomes||[];var _obRole=window._tcaUserRole||'admin';var _obFiltered=(_obRole!=='admin'&&_obHomes.length>0)?window.STAFF.filter(function(s){return _obHomes.includes(s.loc);}):window.STAFF;var sorted=[].concat(_obFiltered).sort(function(a,b){return a.name.localeCompare(b.name);});sorted.forEach(function(s){h+='<option value="'+s.id+'">'+s.name+(s.loc?' ('+s.loc+')':'')+'</option>';});}
@@ -338,7 +338,7 @@ window.obToggleItem=function(recId,itemId){
   if(!items[itemId])items[itemId]={done:false,date:null,by:null};
   var nowDone=!items[itemId].done;
   var byName='admin';
-  try{var u=JSON.parse(localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'));byName=u.user&&u.user.email?u.user.email.split('@')[0]:'admin';}catch(e){}
+  try{var u=JSON.parse((sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')));byName=u.user&&u.user.email?u.user.email.split('@')[0]:'admin';}catch(e){}
   items[itemId]={done:nowDone,date:nowDone?todayISO():null,by:nowDone?byName:null};
   rec.checklist_data=items;
   var totalItems=0,doneItems=0;
@@ -477,7 +477,7 @@ window.obAutoFillFromStaff=function(staffId){
 function obBuildSyncedItems(staffRec,existingItems){
   var items=JSON.parse(JSON.stringify(existingItems||{}));
   var byName='system';
-  try{var u=JSON.parse(localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'));byName=u.user&&u.user.email?u.user.email.split('@')[0]:'system';}catch(e){}
+  try{var u=JSON.parse((sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')));byName=u.user&&u.user.email?u.user.email.split('@')[0]:'system';}catch(e){}
   var today=todayISO();
   Object.keys(FIELD_MAP).forEach(function(itemId){
     var fields=FIELD_MAP[itemId];
