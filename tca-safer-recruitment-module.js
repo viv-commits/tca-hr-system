@@ -15,7 +15,7 @@ var CATS=[
 var _role='admin',_homes=[],_email='',_dname='';
 function sbH(){
   var k=(typeof SUPABASE_KEY!=='undefined')?SUPABASE_KEY:'';
-  var ar=localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token');
+  var ar=(sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'));
   var t=k;try{t=JSON.parse(ar).access_token;}catch(e){}
   return{'Content-Type':'application/json','apikey':k,'Authorization':'Bearer '+t};
 }
@@ -25,7 +25,7 @@ function eJ(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
 async function loadRole(){
   try{
-    var ar=localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token');
+    var ar=(sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'));
     var em='';try{em=JSON.parse(ar).user.email;}catch(e){}
     if(!em&&window._currentUserEmail)em=window._currentUserEmail;
     if(!em)return;
