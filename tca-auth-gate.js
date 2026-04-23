@@ -181,11 +181,137 @@
     }
   }
 
+  
+  function __tcaParseHash() {
+    try {
+      var h = (window.location.hash || '').replace(/^#/, '');
+      if (!h) return { type: 'none', params: {} };
+      var params = {};
+      h.split('&').forEach(function (pair) {
+        var eq = pair.indexOf('=');
+        if (eq > 0) params[decodeURIComponent(pair.substring(0, eq))] = decodeURIComponent(pair.substring(eq + 1));
+      });
+      if (params.error || params.error_code || params.error_description) return { type: 'error', params: params };
+      if (params.type === 'recovery' && params.access_token) return { type: 'recovery', params: params };
+      return { type: 'none', params: params };
+    } catch (err) { return { type: 'none', params: {} }; }
+  }
+
+  function __tcaClearHash() {
+    try {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } else {
+        window.location.hash = '';
+      }
+    } catch (err) { /* ignore */ }
+  }
+
+  function buildResetOverlay() {
+    var s = document.createElement('style'); s.textContent = STYLE; document.head.appendChild(s);
+    var o = document.createElement('div'); o.id = 'tca-auth-overlay';
+    o.innerHTML =
+      '<div class="tca-auth-left"><div class="tca-auth-card">' +
+        '<div class="tca-auth-logo">TCA</div>' +
+        '<div class="tca-auth-welcome">SET A NEW PASSWORD</div>' +
+        '<h1 class="tca-auth-title">Reset password</h1>' +
+        '<div id="tca-auth-msg" class="tca-auth-info" style="display:none"></div>' +
+        '<form id="tca-auth-form" autocomplete="off">' +
+          '<label class="tca-auth-label" for="tca-reset-pass">New password</label>' +
+          '<input id="tca-reset-pass" type="password" minlength="8" required autocomplete="new-password" />' +
+          '<label class="tca-auth-label" for="tca-reset-pass2">Confirm new password</label>' +
+          '<input id="tca-reset-pass2" type="password" minlength="8" required autocomplete="new-password" />' +
+          '<button id="tca-auth-submit" type="submit">Update password</button>' +
+        '</form>' +
+        '<div class="tca-auth-footer">© The Care Advantage · Secure login</div>' +
+      '</div></div>' +
+      '<div class="tca-auth-right"><div class="tca-auth-big-logo">TCA</div>' +
+        '<div class="tca-auth-tagline">HR Compliance System</div>' +
+      '</div>';
+    document.body.appendChild(o);
+    var form = o.querySelector('#tca-auth-form');
+    var p1 = o.querySelector('#tca-reset-pass');
+    var p2 = o.querySelector('#tca-reset-pass2');
+    var btn = o.querySelector('#tca-auth-submit');
+    var msg = o.querySelector('#tca-auth-msg');
+    function showMsg(text, type) {
+      msg.style.display = 'block';
+      msg.className = type === 'info' ? 'tca-auth-info' : 'tca-auth-error';
+      msg.textContent = text;
+    }
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      msg.style.display = 'none';
+      if (p1.value.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); return; }
+      if (p1.value !== p2.value) { showMsg('Passwords do not match.', 'error'); return; }
+      btn.disabled = true; btn.textContent = 'Updating\u2026';
+      try {
+        var r = await sb.auth.updateUser({ password: p1.value });
+        if (r.error) {
+          showMsg(r.error.message || 'Could not update password. Request a new reset link.', 'error');
+          btn.disabled = false; btn.textContent = 'Update password';
+          return;
+        }
+        showMsg('Password updated. Signing you in\u2026', 'info');
+        setTimeout(function () { __tcaClearHash(); location.reload(); }, 900);
+      } catch (err) {
+        showMsg(err.message || 'Unexpected error', 'error');
+        btn.disabled = false; btn.textContent = 'Update password';
+      }
+    });
+    p1.focus();
+  }
+
   async function boot() {
     var hideStyle = document.createElement('style');
     hideStyle.id = 'tca-auth-hide';
     hideStyle.textContent = 'body>*:not(#tca-auth-overlay):not(#tca-auth-logout){visibility:hidden!important}';
     document.head.appendChild(hideStyle);
+
+    // Handle password-reset email link and auth errors in URL hash
+    var __hashInfo = __tcaParseHash();
+    if (__hashInfo.type === 'recovery') {
+      try {
+        var setR = await sb.auth.setSession({ access_token: __hashInfo.params.access_token, refresh_token: __hashInfo.params.refresh_token || '' });
+        __tcaClearHash();
+        if (!setR.error) {
+          var h0 = document.getElementById('tca-auth-hide'); if (h0) h0.remove();
+          buildResetOverlay();
+          return;
+        }
+        // If setSession failed, fall through to login with error
+        buildOverlay();
+        try {
+          var ov0 = document.getElementById('tca-auth-overlay');
+          var msg0 = ov0 && ov0.querySelector('#tca-auth-msg');
+          if (msg0) { msg0.style.display = 'block'; msg0.className = 'tca-auth-error'; msg0.textContent = 'That reset link is no longer valid. Please request a new one below.'; }
+        } catch(e){}
+        return;
+      } catch (err) {
+        __tcaClearHash();
+        buildOverlay();
+        return;
+      }
+    }
+    if (__hashInfo.type === 'error') {
+      __tcaClearHash();
+      buildOverlay();
+      try {
+        var ov = document.getElementById('tca-auth-overlay');
+        var msgEl = ov && ov.querySelector('#tca-auth-msg');
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.className = 'tca-auth-error';
+          var code = __hashInfo.params.error_code || __hashInfo.params.error || '';
+          if (code.indexOf('expired') >= 0 || code === 'access_denied') {
+            msgEl.textContent = 'That password reset link has expired or was already used. Request a new one below.';
+          } else {
+            msgEl.textContent = (__hashInfo.params.error_description || 'Sign-in error. Please try again.').replace(/\+/g, ' ');
+          }
+        }
+      } catch(e){}
+      return;
+    }
 
     var sess = await sb.auth.getSession();
     var session = sess && sess.data && sess.data.session;
