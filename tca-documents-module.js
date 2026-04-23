@@ -14,7 +14,7 @@ var CATS=[
   {k:'contr',l:'Contracts & Offer',i:'CON',t:['Offer Letter','Employment Contract','Signed Contract','Job Description']},
   {k:'other',l:'Other Documents',i:'DOC',t:['Interview Notes','Application Form','CV','Medical Declaration','Other']}
 ];
-function sbH(){return{'Authorization':'Bearer '+SKEY,'apikey':SKEY};}
+function sbH(){var k=SKEY;var tok=k;try{var r=localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token');if(r){var p=JSON.parse(r);if(p&&p.access_token)tok=p.access_token;}}catch(e){}return{'Authorization':'Bearer '+tok,'apikey':k};}
 function toast(m,c){if(window.showToast){window.showToast(m,c);return;}var t=document.createElement('div');t.style.cssText='position:fixed;bottom:24px;right:24px;background:'+(c||'#1C3D6E')+';color:#fff;padding:12px 20px;border-radius:8px;z-index:99999;font-size:13px;font-weight:600';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function qi(n){return n;}
