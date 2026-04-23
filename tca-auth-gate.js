@@ -3,14 +3,27 @@
   // TCA Auth Gate — Supabase Auth integration
   // Gates the app until the user is signed in. Session expires on tab close.
 
-  var SB_URL = window.SUPABASE_URL;
-  var SB_KEY = window.SUPABASE_KEY;
-  if (!SB_URL || !SB_KEY || !window.supabase || !window.supabase.createClient) {
-    console.error('[auth-gate] Missing Supabase globals; cannot gate app.');
-    return;
+  function extractSupabaseConfig() {
+    var scripts = document.querySelectorAll('script');
+    for (var i = 0; i < scripts.length; i++) {
+      var txt = scripts[i].textContent || '';
+      if (txt.indexOf('SUPABASE_URL') >= 0 && txt.indexOf('createClient') >= 0) {
+        var urlM = txt.match(/SUPABASE_URL\s*=\s*['"]([^'"]+)['"]/);
+        var keyM = txt.match(/(?:SUPABASE_ANON_KEY|SUPABASE_KEY)\s*=\s*['"]([^'"]+)['"]/);
+        if (urlM && keyM) return { url: urlM[1], key: keyM[1] };
+      }
+    }
+    return null;
   }
 
-  // Use sessionStorage so closing the tab = logout
+  var cfg = extractSupabaseConfig();
+  if (!cfg || !window.supabase || !window.supabase.createClient) {
+    console.error('[auth-gate] Missing Supabase config or library; cannot gate app.');
+    return;
+  }
+  var SB_URL = cfg.url;
+  var SB_KEY = cfg.key;
+
   var sb = window.supabase.createClient(SB_URL, SB_KEY, {
     auth: {
       storage: window.sessionStorage,
@@ -21,7 +34,6 @@
   });
   window.TCA_SB = sb;
 
-  // --- UI ---------------------------------------------------------------
   var STYLE = [
     '#tca-auth-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
     '#tca-auth-overlay .tca-auth-left{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;background:#fff}',
@@ -93,7 +105,6 @@
       try {
         var r = await sb.auth.signInWithPassword({ email: emailEl.value.trim(), password: passEl.value });
         if (r.error) { showMsg(r.error.message || 'Login failed', 'error'); btn.disabled = false; btn.textContent = 'Log in'; return; }
-        // Success: reload so the app boots with session in place
         showMsg('Signed in. Loading\u2026', 'info');
         setTimeout(function () { location.reload(); }, 400);
       } catch (err) {
@@ -128,12 +139,11 @@
   }
 
   async function attachLogoutHook() {
-    // Listen for any click on an element whose text contains "Sign out" / "Log out" / "Logout"
     document.addEventListener('click', async function (e) {
       var el = e.target;
       for (var i = 0; i < 4 && el; i++, el = el.parentElement) {
         var t = (el.innerText || '').trim().toLowerCase();
-        if (t === 'sign out' || t === 'log out' || t === 'logout' || t === 'sign out of tca hr compliance system?') {
+        if (t === 'sign out' || t === 'log out' || t === 'logout') {
           e.preventDefault(); e.stopPropagation();
           showLoggingOut();
           try { await sb.auth.signOut(); } catch (err) { console.warn(err); }
@@ -153,7 +163,6 @@
       var rows = await r.json();
       if (rows && rows.length) {
         var row = rows[0];
-        // Map DB role values to legacy role strings used in index.html
         var role = (row.role || '').toLowerCase();
         if (role === 'admin') window.USER_ROLE = 'admin';
         else if (role === 'registered_manager' || role === 'rm' || role === 'deputy_manager') window.USER_ROLE = 'manager';
@@ -173,7 +182,6 @@
   }
 
   async function boot() {
-    // Hide body until we know the session state
     var hideStyle = document.createElement('style');
     hideStyle.id = 'tca-auth-hide';
     hideStyle.textContent = 'body>*:not(#tca-auth-overlay):not(#tca-auth-logout){visibility:hidden!important}';
@@ -183,14 +191,12 @@
     var session = sess && sess.data && sess.data.session;
     if (!session) {
       buildOverlay();
-      return; // body stays hidden; login overlay visible
+      return;
     }
-    // Session exists — look up role, reveal app
     await lookupRoleAndHomes(session.user.email);
     var h = document.getElementById('tca-auth-hide'); if (h) h.remove();
     attachLogoutHook();
 
-    // Auto sign-out when token expires
     sb.auth.onAuthStateChange(function (evt) {
       if (evt === 'SIGNED_OUT' || evt === 'TOKEN_REFRESHED_FAILED') {
         location.reload();
@@ -198,7 +204,6 @@
     });
   }
 
-  // Boot ASAP
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
