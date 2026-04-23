@@ -26,7 +26,7 @@
   let shiftPatterns={};
 
   function sbH(){
-    try{const t=JSON.parse(localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||'{}');const at=t.access_token||SANONKEY;return{'apikey':SANONKEY,'Authorization':'Bearer '+at,'Content-Type':'application/json','Prefer':'return=minimal'};}
+    try{const t=JSON.parse((sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'))||'{}');const at=t.access_token||SANONKEY;return{'apikey':SANONKEY,'Authorization':'Bearer '+at,'Content-Type':'application/json','Prefer':'return=minimal'};}
     catch(e){return{'apikey':SANONKEY,'Authorization':'Bearer '+SANONKEY,'Content-Type':'application/json','Prefer':'return=minimal'};}
   }
   function daysIn(y,m){return new Date(y,m+1,0).getDate();}

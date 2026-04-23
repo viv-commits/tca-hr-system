@@ -840,7 +840,7 @@ async function sbFetch(path, method, body) {
     method: method,
     headers: {
       'apikey': SUPABASE_KEY,
-'Authorization': 'Bearer ' + (()=>{try{const r=localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token');if(r){const p=JSON.parse(r);if(p&&p.access_token)return p.access_token;}return SUPABASE_KEY;}catch(e){return SUPABASE_KEY;}})(),      'Content-Type': 'application/json',
+'Authorization': 'Bearer ' + (()=>{try{const r=(sessionStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token')||localStorage.getItem('sb-vhebrkhdgeiyxkpphlut-auth-token'));if(r){const p=JSON.parse(r);if(p&&p.access_token)return p.access_token;}return SUPABASE_KEY;}catch(e){return SUPABASE_KEY;}})(),      'Content-Type': 'application/json',
       'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
     }
   };
