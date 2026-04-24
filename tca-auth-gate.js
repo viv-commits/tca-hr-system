@@ -34,55 +34,61 @@
   });
   window.TCA_SB = sb;
 
-  var STYLE = [
-    '#tca-auth-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
-    '#tca-auth-overlay .tca-auth-left{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;background:#fff}',
-    '#tca-auth-overlay .tca-auth-right{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f766e 0%,#134e4a 100%);color:#fff;padding:40px}',
-    '#tca-auth-overlay .tca-auth-card{width:100%;max-width:380px}',
-    '#tca-auth-overlay .tca-auth-logo{width:72px;height:72px;border-radius:16px;background:#0f766e;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px;margin-bottom:32px;letter-spacing:1px}',
-    '#tca-auth-overlay h1{font-size:14px;font-weight:500;color:#6b7280;margin:0 0 4px;letter-spacing:0.5px;text-transform:uppercase}',
-    '#tca-auth-overlay h2{font-size:28px;font-weight:700;color:#111827;margin:0 0 32px}',
-    '#tca-auth-overlay label{display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:6px}',
-    '#tca-auth-overlay input[type=email],#tca-auth-overlay input[type=password]{width:100%;padding:11px 14px;font-size:15px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:16px;background:#f9fafb;box-sizing:border-box;transition:border-color .15s}',
-    '#tca-auth-overlay input[type=email]:focus,#tca-auth-overlay input[type=password]:focus{outline:none;border-color:#0f766e;background:#fff;box-shadow:0 0 0 3px rgba(15,118,110,0.1)}',
-    '#tca-auth-overlay button.tca-auth-primary{width:100%;padding:12px;font-size:15px;font-weight:600;color:#fff;background:#0f766e;border:none;border-radius:8px;cursor:pointer;transition:background .15s}',
-    '#tca-auth-overlay button.tca-auth-primary:hover{background:#0d5d56}',
-    '#tca-auth-overlay button.tca-auth-primary:disabled{background:#9ca3af;cursor:not-allowed}',
-    '#tca-auth-overlay .tca-auth-forgot{display:block;text-align:center;margin-top:14px;font-size:13px;color:#0f766e;text-decoration:none;cursor:pointer;background:none;border:none;width:100%;padding:6px}',
+    var STYLE = [
+    '@import url(https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap);',
+    '#tca-auth-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;background:#f7f8fb;font-family:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1C3D6E}',
+    '#tca-auth-overlay .tca-auth-left{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 32px;background:#fff;position:relative;z-index:2}',
+    '#tca-auth-overlay .tca-auth-right{flex:1.1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 20% 20%,#254b7f 0%,#1C3D6E 45%,#0f2649 100%);color:#fff;padding:40px;position:relative;overflow:hidden}',
+    '#tca-auth-overlay .tca-auth-right::before{content:"";position:absolute;width:720px;height:720px;border-radius:50%;border:1px solid rgba(255,255,255,0.08);top:-180px;right:-180px;pointer-events:none}',
+    '#tca-auth-overlay .tca-auth-right::after{content:"";position:absolute;width:420px;height:420px;border-radius:50%;border:1px solid rgba(255,255,255,0.06);bottom:-120px;left:-120px;pointer-events:none}',
+    '#tca-auth-overlay .tca-auth-card{width:100%;max-width:400px}',
+    '#tca-auth-overlay .tca-auth-logo-img{display:block;width:180px;height:auto;margin:0 0 40px;user-select:none}',
+    '#tca-auth-overlay .tca-auth-big-logo-img{display:block;width:300px;max-width:70%;height:auto;margin:0 auto 24px;filter:brightness(0) invert(1);user-select:none;position:relative;z-index:1}',
+    '#tca-auth-overlay h1{font-size:12px;font-weight:600;color:#6b7b95;margin:0 0 6px;letter-spacing:1.2px;text-transform:uppercase}',
+    '#tca-auth-overlay h2{font-size:30px;font-weight:700;color:#0f2649;margin:0 0 28px;letter-spacing:-0.5px}',
+    '#tca-auth-overlay label{display:block;font-size:13px;font-weight:500;color:#475569;margin:14px 0 6px}',
+    '#tca-auth-overlay input[type=email],#tca-auth-overlay input[type=password]{width:100%;padding:12px 14px;font-size:15px;font-family:inherit;color:#0f2649;border:1.5px solid #e2e8f0;border-radius:10px;background:#f8fafc;box-sizing:border-box;transition:border-color .15s,box-shadow .15s,background .15s}',
+    '#tca-auth-overlay input[type=email]:focus,#tca-auth-overlay input[type=password]:focus{outline:none;border-color:#1C3D6E;background:#fff;box-shadow:0 0 0 4px rgba(28,61,110,0.08)}',
+    '#tca-auth-overlay button.tca-auth-primary{width:100%;margin-top:22px;padding:13px;font-size:15px;font-weight:600;font-family:inherit;color:#fff;background:#1C3D6E;border:none;border-radius:10px;cursor:pointer;transition:background .15s,transform .1s,box-shadow .15s;letter-spacing:0.2px;box-shadow:0 2px 6px rgba(28,61,110,0.15)}',
+    '#tca-auth-overlay button.tca-auth-primary:hover{background:#254b7f;box-shadow:0 4px 12px rgba(28,61,110,0.25)}',
+    '#tca-auth-overlay button.tca-auth-primary:active{transform:translateY(1px)}',
+    '#tca-auth-overlay button.tca-auth-primary:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none}',
+    '#tca-auth-overlay .tca-auth-forgot{display:block;text-align:center;margin-top:14px;font-size:13px;font-weight:500;color:#1C3D6E;text-decoration:none;cursor:pointer;background:none;border:none;width:100%;padding:8px;font-family:inherit}',
     '#tca-auth-overlay .tca-auth-forgot:hover{text-decoration:underline}',
-    '#tca-auth-overlay .tca-auth-error{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;padding:10px 12px;border-radius:6px;font-size:13px;margin-bottom:14px}',
-    '#tca-auth-overlay .tca-auth-info{color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px 12px;border-radius:6px;font-size:13px;margin-bottom:14px}',
-    '#tca-auth-overlay .tca-auth-footer{margin-top:28px;font-size:11px;color:#9ca3af;text-align:center}',
-    '#tca-auth-overlay .tca-auth-big-logo{font-size:64px;font-weight:700;letter-spacing:2px;margin-bottom:16px}',
-    '#tca-auth-overlay .tca-auth-tagline{font-size:16px;opacity:0.9;max-width:320px;text-align:center;line-height:1.5}',
-    '@media(max-width:900px){#tca-auth-overlay .tca-auth-right{display:none}}'
+    '#tca-auth-overlay .tca-auth-error{color:#991b1b;background:#fef2f2;border:1px solid #fecaca;padding:10px 12px;border-radius:8px;margin-bottom:16px;font-size:13px;line-height:1.4}',
+    '#tca-auth-overlay .tca-auth-info{color:#075985;background:#eff6ff;border:1px solid #bfdbfe;padding:10px 12px;border-radius:8px;margin-bottom:16px;font-size:13px;line-height:1.4}',
+    '#tca-auth-overlay .tca-auth-footer{margin-top:32px;font-size:11px;color:#94a3b8;text-align:center;letter-spacing:0.3px}',
+    '#tca-auth-overlay .tca-auth-hero{text-align:center;position:relative;z-index:1}',
+    '#tca-auth-overlay .tca-auth-hero-title{font-size:20px;font-weight:500;opacity:0.92;letter-spacing:0.3px;margin-top:8px}',
+    '#tca-auth-overlay .tca-auth-hero-sub{font-size:13px;opacity:0.6;margin-top:20px;letter-spacing:0.8px;text-transform:uppercase}',
+    '@media(max-width:900px){#tca-auth-overlay .tca-auth-right{display:none}#tca-auth-overlay .tca-auth-left{flex:1;padding:32px 24px}}'
   ].join('');
 
   function buildOverlay() {
     var s = document.createElement('style'); s.textContent = STYLE; document.head.appendChild(s);
     var o = document.createElement('div'); o.id = 'tca-auth-overlay';
     o.innerHTML =
-      '<div class="tca-auth-left"><div class="tca-auth-card">' +
-        '<div class="tca-auth-logo">TCA</div>' +
-        '<h1>Welcome back</h1>' +
-        '<h2>Log in</h2>' +
-        '<div id="tca-auth-msg" style="display:none"></div>' +
-        '<form id="tca-auth-form" autocomplete="on">' +
-          '<label for="tca-auth-email">Email</label>' +
-          '<input type="email" id="tca-auth-email" required autocomplete="email" />' +
-          '<label for="tca-auth-pass">Password</label>' +
-          '<input type="password" id="tca-auth-pass" required autocomplete="current-password" />' +
-          '<button type="submit" class="tca-auth-primary" id="tca-auth-submit">Log in</button>' +
-        '</form>' +
-        '<button class="tca-auth-forgot" id="tca-auth-forgot-btn" type="button">Forgot your password?</button>' +
-        '<div class="tca-auth-footer">\u00A9 The Care Advantage \u00B7 Secure login</div>' +
-      '</div></div>' +
-      '<div class="tca-auth-right">' +
-        '<div style="text-align:center">' +
-          '<div class="tca-auth-big-logo">TCA</div>' +
-          '<div class="tca-auth-tagline">HR Compliance System</div>' +
-        '</div>' +
-      '</div>';
+            '<div class="tca-auth-left"><div class="tca-auth-card">' +
+              '<img class="tca-auth-logo-img" src="/tca-logo.png" alt="The Care Advantage" />' +
+              '<h1>Welcome back</h1>' +
+              '<h2>Sign in to your account</h2>' +
+              '<div id="tca-auth-msg" style="display:none"></div>' +
+              '<form id="tca-auth-form" autocomplete="on">' +
+                '<label for="tca-auth-email">Email address</label>' +
+                '<input type="email" id="tca-auth-email" required autocomplete="email" placeholder="you@example.com" />' +
+                '<label for="tca-auth-pass">Password</label>' +
+                '<input type="password" id="tca-auth-pass" required autocomplete="current-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" />' +
+                '<button type="submit" class="tca-auth-primary" id="tca-auth-submit">Sign in</button>' +
+              '</form>' +
+              '<button class="tca-auth-forgot" id="tca-auth-forgot-btn" type="button">Forgot your password?</button>' +
+              '<div class="tca-auth-footer">\u00A9 The Care Advantage \u00B7 HR Compliance System</div>' +
+            '</div></div>' +
+            '<div class="tca-auth-right">' +
+              '<div class="tca-auth-hero">' +
+                '<img class="tca-auth-big-logo-img" src="/tca-logo.png" alt="The Care Advantage" />' +
+                '<div class="tca-auth-hero-sub">HR Compliance System</div>' +
+              '</div>' +
+            '</div>';
     document.body.appendChild(o);
 
     var form = o.querySelector('#tca-auth-form');
@@ -131,7 +137,7 @@
 
   function showLoggingOut() {
     var s = document.createElement('style');
-    s.textContent = '#tca-auth-logout{position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111827;flex-direction:column;gap:16px}#tca-auth-logout .l{font-size:32px;font-weight:700}#tca-auth-logout .bar{width:240px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden}#tca-auth-logout .bar>div{height:100%;background:#0f766e;width:30%;animation:tca-bar 1s linear infinite}@keyframes tca-bar{0%{margin-left:-30%}100%{margin-left:100%}}';
+    s.textContent = '#tca-auth-logout{position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111827;flex-direction:column;gap:16px}#tca-auth-logout .l{font-size:32px;font-weight:700}#tca-auth-logout .bar{width:240px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden}#tca-auth-logout .bar>div{height:100%;background:#1C3D6E;width:30%;animation:tca-bar 1s linear infinite}@keyframes tca-bar{0%{margin-left:-30%}100%{margin-left:100%}}';
     document.head.appendChild(s);
     var d = document.createElement('div'); d.id = 'tca-auth-logout';
     d.innerHTML = '<div class="l">Logging out\u2026</div><div class="bar"><div></div></div>';
