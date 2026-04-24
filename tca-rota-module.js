@@ -495,7 +495,7 @@
     try {
       const ids=(window._rotaCurrentStaff||[]).map(s=>s.id);
       if(!ids.length)return{};
-      const resp=await fetch(SURL+'/rest/v1/staff_pay_rates?staff_id=in.('+ids.join(',')+')',{headers:{'apikey':SANONKEY,'Authorization':'Bearer '+SANONKEY}});
+      const resp=await fetch(SURL+'/rest/v1/staff_pay_rates?staff_id=in.('+ids.join(',')+')',{headers:sbH()});
       if(!resp.ok)return{};
       const rows=await resp.json();
       const map={};rows.forEach(function(r){map[r.staff_id]=r;});
@@ -508,7 +508,7 @@
       const payload=Object.assign({staff_id:staffId,staff_name:staffName,updated_at:new Date().toISOString()},rates);
       const url=existing&&existing.id?SURL+'/rest/v1/staff_pay_rates?id=eq.'+existing.id:SURL+'/rest/v1/staff_pay_rates';
       const method=existing&&existing.id?'PATCH':'POST';
-      const resp=await fetch(url,{method,headers:{'apikey':SANONKEY,'Authorization':'Bearer '+SANONKEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      const resp=await fetch(url,{method,headers:sbH(),body:JSON.stringify(payload)});
       return resp.ok;
     }catch(e){return false;}
   }
