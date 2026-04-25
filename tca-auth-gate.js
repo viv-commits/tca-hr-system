@@ -43,7 +43,7 @@
     '#tca-auth-overlay .tca-auth-right::after{content:"";position:absolute;width:420px;height:420px;border-radius:50%;border:1px solid rgba(255,255,255,0.06);bottom:-120px;left:-120px;pointer-events:none}',
     '#tca-auth-overlay .tca-auth-card{width:100%;max-width:400px}',
     '#tca-auth-overlay .tca-auth-logo-img{display:block;width:180px;height:auto;margin:0 0 40px;user-select:none}',
-    '#tca-auth-overlay .tca-auth-big-logo-img{display:block;width:300px;max-width:70%;height:auto;margin:0 auto 24px;filter:brightness(0) invert(1);user-select:none;position:relative;z-index:1}',
+    '#tca-auth-overlay .tca-auth-big-logo-img{display:block;width:300px;max-width:70%;height:auto;margin:0 auto 24px;user-select:none;position:relative;z-index:1;background:#fff;padding:28px 36px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.25),0 0 0 1px rgba(255,255,255,0.05);box-sizing:border-box}',
     '#tca-auth-overlay h1{font-size:12px;font-weight:600;color:#6b7b95;margin:0 0 6px;letter-spacing:1.2px;text-transform:uppercase}',
     '#tca-auth-overlay h2{font-size:30px;font-weight:700;color:#0f2649;margin:0 0 28px;letter-spacing:-0.5px}',
     '#tca-auth-overlay label{display:block;font-size:13px;font-weight:500;color:#475569;margin:14px 0 6px}',
