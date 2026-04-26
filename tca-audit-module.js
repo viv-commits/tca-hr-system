@@ -32,7 +32,7 @@
         const details = typeof r.details === 'object' ? JSON.stringify(r.details).substring(0,80) : (r.details||'').substring(0,80);
         return '<tr data-module="' + (r.module||'') + '" data-action="' + (r.action||'') + '" style="border-bottom:1px solid #f5f5f5">' +
           '<td style="padding:7px 10px;font-size:12px;white-space:nowrap;color:#666">' + ts + '</td>' +
-          '<td style="padding:7px 8px;font-size:12px;font-weight:600">' + (r.user_email||r.user||'System') + '</td>' +
+          '<td style="padding:7px 8px;font-size:12px;font-weight:600">' + (r.changed_by_email||r.user_email||r.user||'System') + '</td>' +
           '<td style="padding:7px 8px;font-size:11px">' + actionBadge(r.action||'') + '</td>' +
           '<td style="padding:7px 8px;font-size:11px"><span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px">' + (r.module||'-') + '</span></td>' +
           '<td style="padding:7px 8px;font-size:11px;color:#666;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (r.description||'') + '">' + (r.description||details||'-') + '</td>' +
