@@ -641,7 +641,7 @@ td{padding:9px 10px;vertical-align:middle;white-space:nowrap}
 // ── NEW: sidebar helpers ──
 function setLocFromSidebar(loc) {
   showPage('dashboard', null);
-  currentLoc = loc;
+  currentLoc = loc; window.scrollTo({top: 0, behavior: 'smooth'});
   render();
   buildLocBar();
 }
