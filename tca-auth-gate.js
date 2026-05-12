@@ -174,8 +174,15 @@ o.innerHTML =
 '<input type="email" id="tca-req-email" required maxlength="320" autocomplete="email" placeholder="you@yourcompany.com" />' +
 '<label for="tca-req-org">Organisation</label>' +
 '<input type="text" id="tca-req-org" maxlength="200" autocomplete="organization" placeholder="Which care provider you work for" />' +
-'<label for="tca-req-role">Role / job title</label>' +
-'<input type="text" id="tca-req-role" maxlength="120" autocomplete="organization-title" placeholder="e.g. Registered Manager" />' +
+'<label for="tca-req-role">Role</label>' +
+'<select id="tca-req-role" required>' +
+'<option value="" disabled selected>Select your role…</option>' +
+'<option value="Registered Manager">Registered Manager</option>' +
+'<option value="Deputy Manager">Deputy Manager</option>' +
+'<option value="Senior Support Worker">Senior Support Worker</option>' +
+'<option value="Support Worker">Support Worker</option>' +
+'<option value="Residential Care Worker">Residential Care Worker</option>' +
+'</select>' +
 '<label for="tca-req-msg-input">Anything we should know? <span style="color:#94a3b8;font-weight:400">(optional)</span></label>' +
 '<textarea id="tca-req-msg-input" maxlength="2000" placeholder="Why you need access, who referred you, etc."></textarea>' +
 '<div class="tca-auth-honeypot" aria-hidden="true">' +
@@ -233,6 +240,7 @@ var message = (msgEl.value || '').trim();
 
 if (full_name.length < 2) { showMsg('Please enter your full name.', 'error'); nameEl.focus(); return; }
 if (!isEmail(email)) { showMsg('Please enter a valid email address.', 'error'); emailEl.focus(); return; }
+if (!role) { showMsg('Please choose your role.', 'error'); roleEl.focus(); return; }
 
 btn.disabled = true; btn.textContent = 'Sending\u2026';
 try {
