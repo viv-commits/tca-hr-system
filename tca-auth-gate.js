@@ -476,6 +476,16 @@ return;
 }
 
 var sess = await sb.auth.getSession();
+if (sess && sess.error) {
+// Clear any corrupted stored session before showing the login form
+try { await sb.auth.signOut(); } catch(_) {}
+sessionStorage.clear();
+buildOverlay();
+var ov = document.getElementById('tca-auth-overlay');
+var msgEl = ov && ov.querySelector('#tca-auth-msg');
+if (msgEl) { msgEl.style.display = 'block'; msgEl.className = 'tca-auth-error'; msgEl.textContent = sess.error.message || 'Session error — please sign in again.'; }
+return;
+}
 var session = sess && sess.data && sess.data.session;
 if (!session) {
 buildOverlay();
