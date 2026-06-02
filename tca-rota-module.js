@@ -794,31 +794,33 @@
 
   // --- Apply shift + re-render cell ---
   async function _rotaApplyShift(cell, shKey, ts, te, notes) {
-    const sid = cell.dataset.sid;
-    const day = parseInt(cell.dataset.day);
-    const y = window._rotaUX.date.getFullYear();
-    const m = window._rotaUX.date.getMonth() + 1;
-    await window._rotaUX.save(window._rotaUX.home, sid, y, m, day, shKey, ts, te, notes||'');
-    const rKey = sid + '_' + day;
-    window._rotaData[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, notes: notes||'' };
-    const sh = window._rotaUX.shifts.find(s=>s.key===shKey) || window._rotaUX.shifts[0];
-    const timeStr = (shKey==='C'&&ts) ? ts+(te?'–'+te:'') : (sh.ts&&sh.te ? sh.ts+'–'+sh.te : '');
-    cell.style.background = sh.bg || '#f5f5f5';
-    cell.style.color = sh.tc || '#333';
-    if (shKey) {
-      const dispKey = shKey==='C'&&ts ? ts+(te?'–'+te:'') : shKey;
-      cell.innerHTML = '<div style="font-weight:700;font-size:12px;line-height:1.2">' + dispKey + '</div>'
-        + (timeStr&&shKey!=='C' ? '<div style="font-size:10px;opacity:.7">' + timeStr + '</div>' : '')
-        + (shKey==='C' ? '<div style="font-size:10px;opacity:.7">Custom</div>' : '');
-    } else {
-      cell.innerHTML = '';
-      cell.style.background = '#f5f5f5';
-      cell.style.color = '#999';
-    }
-    if (typeof tcaHrsCell === 'function') setTimeout(tcaHrsCell, 50);
+  const sid = cell.dataset.sid;
+  const day = parseInt(cell.dataset.day);
+  const y = window._rotaUX.date.getFullYear();
+  const m = window._rotaUX.date.getMonth();
+  await window._rotaUX.save(window._rotaUX.home, sid, y, m, day, shKey, ts, te, notes||'');
+  const rKey = sid + '_' + day;
+  window._rotaData[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, ts: ts, te: te, notes: notes||'' };
+  const sh = window._rotaUX.shifts.find(s=>s.key===shKey) || window._rotaUX.shifts[0];
+  cell.style.background = sh.bg || '#f5f5f5';
+  cell.style.color = sh.tc || '#999';
+  if (shKey) {
+    const timeStr = ts ? (ts + (te ? '-' + te : '')) : (sh.ts && sh.te ? sh.ts + '-' + sh.te : '');
+    cell.innerHTML = '<div>' + shKey + '</div>' + (timeStr ? '<div class="cell-time" style="font-size:8px;font-weight:400;margin-top:1px;opacity:.8">' + timeStr + '</div>' : '');
+  } else {
+    cell.innerHTML = '';
+    cell.style.background = '#f5f5f5';
+    cell.style.color = '#999';
   }
-
-  // --- Keyboard handler ---
+  // Update hours total cell for this staff member
+  const hrsCell = document.getElementById('hrs_' + sid);
+  if (hrsCell) {
+    const {total, mins, totalMins} = tcaCalcHours(parseInt(sid), y, m);
+    hrsCell.textContent = mins > 0 ? total + 'h ' + mins + 'm' : total + 'h';
+    hrsCell.style.background = totalMins > 0 ? '#e8f5e9' : '#f9f9f9';
+    hrsCell.style.color = totalMins > 0 ? '#2e7d32' : '#999';
+  }
+}// --- Keyboard handler ---
   window._rotaKeydown = async function(cell, evt) {
     const k = evt.key;
     const ku = k.toUpperCase();
