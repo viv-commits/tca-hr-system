@@ -85,6 +85,20 @@
     if (_selectedCell) _selectedCell.classList.add('rota-selected');
   }
 
+  // Expose closure state to window so oncontextmenu/onkeydown handlers can access it
+  window._rotaUX = {
+    get clip() { return _clipCell; },
+    set clip(v) { _clipCell = v; },
+    get selected() { return _selectedCell; },
+    select: function(td) { _rotaSelectCell(td); },
+    get data() { return rotaData; },
+    get shifts() { return SHIFTS; },
+    get staff() { return rotaStaff; },
+    get home() { return currentHome; },
+    get date() { return currentDate; },
+    save: function(home,sid,y,m,d,k,ts,te,notes) { return saveRotaCell(home,sid,y,m,d,k,ts,te,notes); }
+  };
+
   window._rotaCellClick = function(el, evt) {
     if (evt && evt.ctrlKey && _clipCell) {
       _rotaPasteToCell(el);
@@ -678,20 +692,20 @@
     evt.preventDefault();
     const old = document.getElementById('rota-ctx-menu');
     if (old) old.remove();
-    _rotaSelectCell(cell);
+    window._rotaUX.select(cell);
     cell.focus();
 
     const sid = cell.dataset.sid;
     const day = parseInt(cell.dataset.day);
     const rKey = sid + '_' + day;
-    const entry = rotaData[rKey] || {key:'', ts:'', te:'', notes:''};
+    const entry = window._rotaUX.data[rKey] || {key:'', ts:'', te:'', notes:''};
 
     const menu = document.createElement('div');
     menu.className = 'rota-ctx';
     menu.id = 'rota-ctx-menu';
 
     // Shift options
-    SHIFTS.forEach(sh => {
+    window._rotaUX.shifts.forEach(sh => {
       const item = document.createElement('div');
       item.className = 'rota-ctx-item';
       const dot = document.createElement('span');
@@ -727,10 +741,10 @@
     menu.appendChild(cItem);
 
     // Paste (if clipboard has data)
-    if (_clipCell) {
+    if (window._rotaUX.clip) {
       const pItem = document.createElement('div');
       pItem.className = 'rota-ctx-item';
-      const sh = SHIFTS.find(s=>s.key===_clipCell.key)||SHIFTS[0];
+      const sh = window._rotaUX.shifts.find(s=>s.key===window._rotaUX.clip.key)||window._rotaUX.shifts[0];
       pItem.innerHTML = '<span style="font-size:14px">📌</span><span>Paste: <b>' + (sh.label||'Off') + '</b></span><span style="margin-left:auto;font-size:10px;opacity:.5">Ctrl+V</span>';
       pItem.onclick = async () => { menu.remove(); await _rotaPasteToCell(cell); };
       menu.appendChild(pItem);
@@ -746,7 +760,7 @@
     menu.appendChild(eItem);
 
     const x = Math.min(evt.clientX, window.innerWidth - 210);
-    const y = Math.min(evt.clientY, window.innerHeight - 60 - SHIFTS.length * 35);
+    const y = Math.min(evt.clientY, window.innerHeight - 60 - window._rotaUX.shifts.length * 35);
     menu.style.left = x + 'px';
     menu.style.top = Math.max(10, y) + 'px';
     document.body.appendChild(menu);
@@ -762,9 +776,9 @@
     const sid = cell.dataset.sid;
     const day = parseInt(cell.dataset.day);
     const rKey = sid + '_' + day;
-    const entry = rotaData[rKey] || {key:'', ts:'', te:'', notes:''};
-    const sh = SHIFTS.find(s=>s.key===entry.key)||SHIFTS[0];
-    _clipCell = { sid, day, key: entry.key, ts: entry.time_start||entry.ts||sh.ts||'', te: entry.time_end||entry.te||sh.te||'', notes: entry.notes||'', label: sh.label };
+    const entry = window._rotaUX.data[rKey] || {key:'', ts:'', te:'', notes:''};
+    const sh = window._rotaUX.shifts.find(s=>s.key===entry.key)||window._rotaUX.shifts[0];
+    window._rotaUX.clip = { sid, day, key: entry.key, ts: entry.time_start||entry.ts||sh.ts||'', te: entry.time_end||entry.te||sh.te||'', notes: entry.notes||'', label: sh.label };
     // Mark cell
     document.querySelectorAll('.rota-copied-cell').forEach(e => e.classList.remove('rota-copied-cell'));
     cell.classList.add('rota-copied-cell');
@@ -772,9 +786,9 @@
   }
 
   async function _rotaPasteToCell(cell) {
-    if (!_clipCell) { _uxToast('Nothing copied yet — right-click a cell and choose Copy'); return; }
-    const sh = SHIFTS.find(s=>s.key===_clipCell.key)||SHIFTS[0];
-    await _rotaApplyShift(cell, _clipCell.key, _clipCell.ts||sh.ts||'', _clipCell.te||sh.te||'', _clipCell.notes||'');
+    if (!window._rotaUX.clip) { _uxToast('Nothing copied yet — right-click a cell and choose Copy'); return; }
+    const sh = window._rotaUX.shifts.find(s=>s.key===window._rotaUX.clip.key)||window._rotaUX.shifts[0];
+    await _rotaApplyShift(cell, window._rotaUX.clip.key, window._rotaUX.clip.ts||sh.ts||'', window._rotaUX.clip.te||sh.te||'', window._rotaUX.clip.notes||'');
     _uxToast('📌 Pasted: ' + (sh.label||'Off'));
   }
 
@@ -782,12 +796,12 @@
   async function _rotaApplyShift(cell, shKey, ts, te, notes) {
     const sid = cell.dataset.sid;
     const day = parseInt(cell.dataset.day);
-    const y = currentDate.getFullYear();
-    const m = currentDate.getMonth() + 1;
-    await saveRotaCell(currentHome, sid, y, m, day, shKey, ts, te, notes||'');
+    const y = window._rotaUX.date.getFullYear();
+    const m = window._rotaUX.date.getMonth() + 1;
+    await window._rotaUX.save(window._rotaUX.home, sid, y, m, day, shKey, ts, te, notes||'');
     const rKey = sid + '_' + day;
-    rotaData[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, notes: notes||'' };
-    const sh = SHIFTS.find(s=>s.key===shKey) || SHIFTS[0];
+    window._rotaUX.data[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, notes: notes||'' };
+    const sh = window._rotaUX.shifts.find(s=>s.key===shKey) || window._rotaUX.shifts[0];
     const timeStr = (shKey==='C'&&ts) ? ts+(te?'–'+te:'') : (sh.ts&&sh.te ? sh.ts+'–'+sh.te : '');
     cell.style.background = sh.bg || '#f5f5f5';
     cell.style.color = sh.tc || '#333';
@@ -821,7 +835,7 @@
       evt.preventDefault();
       const sid = cell.dataset.sid;
       const day = parseInt(cell.dataset.day);
-      const allIds = rotaStaff.map(s=>String(s.id));
+      const allIds = window._rotaUX.staff.map(s=>String(s.id));
       const curIdx = allIds.indexOf(String(sid));
       let nSid = sid, nDay = day;
       if (k==='ArrowLeft') nDay = day-1;
@@ -829,12 +843,12 @@
       else if (k==='ArrowUp') nSid = allIds[Math.max(0,curIdx-1)];
       else if (k==='ArrowDown') nSid = allIds[Math.min(allIds.length-1,curIdx+1)];
       const t = document.getElementById('cell_'+nSid+'_'+nDay);
-      if (t) { _rotaSelectCell(t); t.focus(); }
+      if (t) { window._rotaUX.select(t); t.focus(); }
       return;
     }
     // Letter shortcuts: E D L N S W A T X O C
     const shiftByKey = {};
-    SHIFTS.forEach(s => { if(s.key) shiftByKey[s.key] = s; });
+    window._rotaUX.shifts.forEach(s => { if(s.key) shiftByKey[s.key] = s; });
     if (shiftByKey[ku] && !evt.ctrlKey && !evt.metaKey) {
       evt.preventDefault();
       const sh = shiftByKey[ku];
@@ -842,7 +856,7 @@
       const sid = cell.dataset.sid;
       const day = parseInt(cell.dataset.day);
       const rKey = sid+'_'+day;
-      const entry = rotaData[rKey]||{};
+      const entry = window._rotaUX.data[rKey]||{};
       await _rotaApplyShift(cell, sh.key, sh.ts||'', sh.te||'', entry.notes||'');
     }
   };
