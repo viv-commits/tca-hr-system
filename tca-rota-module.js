@@ -91,7 +91,7 @@
     set clip(v) { _clipCell = v; },
     get selected() { return _selectedCell; },
     select: function(td) { _rotaSelectCell(td); },
-    get data() { return rotaData; },
+    get data() { return window._rotaData; },
     get shifts() { return SHIFTS; },
     get staff() { return rotaStaff; },
     get home() { return currentHome; },
@@ -698,7 +698,7 @@
     const sid = cell.dataset.sid;
     const day = parseInt(cell.dataset.day);
     const rKey = sid + '_' + day;
-    const entry = window._rotaUX.data[rKey] || {key:'', ts:'', te:'', notes:''};
+    const entry = window._rotaData[rKey] || {key:'', ts:'', te:'', notes:''};
 
     const menu = document.createElement('div');
     menu.className = 'rota-ctx';
@@ -776,7 +776,7 @@
     const sid = cell.dataset.sid;
     const day = parseInt(cell.dataset.day);
     const rKey = sid + '_' + day;
-    const entry = window._rotaUX.data[rKey] || {key:'', ts:'', te:'', notes:''};
+    const entry = window._rotaData[rKey] || {key:'', ts:'', te:'', notes:''};
     const sh = window._rotaUX.shifts.find(s=>s.key===entry.key)||window._rotaUX.shifts[0];
     window._rotaUX.clip = { sid, day, key: entry.key, ts: entry.time_start||entry.ts||sh.ts||'', te: entry.time_end||entry.te||sh.te||'', notes: entry.notes||'', label: sh.label };
     // Mark cell
@@ -800,7 +800,7 @@
     const m = window._rotaUX.date.getMonth() + 1;
     await window._rotaUX.save(window._rotaUX.home, sid, y, m, day, shKey, ts, te, notes||'');
     const rKey = sid + '_' + day;
-    window._rotaUX.data[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, notes: notes||'' };
+    window._rotaData[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, notes: notes||'' };
     const sh = window._rotaUX.shifts.find(s=>s.key===shKey) || window._rotaUX.shifts[0];
     const timeStr = (shKey==='C'&&ts) ? ts+(te?'–'+te:'') : (sh.ts&&sh.te ? sh.ts+'–'+sh.te : '');
     cell.style.background = sh.bg || '#f5f5f5';
@@ -856,7 +856,7 @@
       const sid = cell.dataset.sid;
       const day = parseInt(cell.dataset.day);
       const rKey = sid+'_'+day;
-      const entry = window._rotaUX.data[rKey]||{};
+      const entry = window._rotaData[rKey]||{};
       await _rotaApplyShift(cell, sh.key, sh.ts||'', sh.te||'', entry.notes||'');
     }
   };
