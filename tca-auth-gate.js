@@ -493,6 +493,7 @@ return;
 }
 await lookupRoleAndHomes(session.user.email);
 var h = document.getElementById('tca-auth-hide'); if (h) h.remove();
+      if (window.showPage) showPage('dashboard');
 attachLogoutHook();
 
 sb.auth.onAuthStateChange(function (evt) {
