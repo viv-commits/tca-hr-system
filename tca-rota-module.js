@@ -75,28 +75,23 @@
   window._rotaNav=function(dir){currentDate.setMonth(currentDate.getMonth()+dir);window.buildRotaPage();};
   window._rotaGoToday=function(){currentDate=new Date();window.buildRotaPage();};
 
-  window._rotaCellClick=async function(el){
-    const staffId=parseInt(el.dataset.sid);const day=parseInt(el.dataset.day);const staffName=el.dataset.sname||'';
-    const y=currentDate.getFullYear();const m=currentDate.getMonth();
-    if(!window._rotaData)window._rotaData={};
-    const key=staffId+'_'+day;
-    const cur=window._rotaData[key]||{key:'',ts:'',te:'',notes:''};
-    const curShift=SHIFTS.find(s=>s.key===cur.key)||SHIFTS[0];
-    const nextIdx=(SHIFTS.findIndex(s=>s.key===cur.key)+1)%SHIFTS.length;
-    const nextShift=SHIFTS[nextIdx];
-    const newEntry={key:nextShift.key,ts:nextShift.ts,te:nextShift.te,notes:cur.notes||''};
-    window._rotaData[key]=newEntry;
-    const cell=document.getElementById('cell_'+staffId+'_'+day);
-    if(cell){
-      cell.textContent=nextShift.key||'';
-      cell.style.background=nextShift.bg;
-      cell.style.color=nextShift.tc;
-      const sub=cell.querySelector('.cell-time');
-      if(sub&&nextShift.ts)sub.textContent=nextShift.ts+(nextShift.te?'-'+nextShift.te:'');
-      else if(sub)sub.textContent='';
+  // — Clipboard state for Excel-style copy/paste —
+  let _clipCell = null; // {sid,day,key,ts,te,notes,label} copied cell data
+  let _selectedCell = null; // currently selected TD element
+
+  function _rotaSelectCell(td) {
+    if (_selectedCell && _selectedCell !== td) _selectedCell.classList.remove('rota-selected');
+    _selectedCell = td || null;
+    if (_selectedCell) _selectedCell.classList.add('rota-selected');
+  }
+
+  window._rotaCellClick = function(el, evt) {
+    if (evt && evt.ctrlKey && _clipCell) {
+      _rotaPasteToCell(el);
+      return;
     }
-    await saveRotaCell(currentHome,staffId,y,m,day,nextShift.key,nextShift.ts,nextShift.te,cur.notes||'');
-    if(nextShift.key)showToast(nextShift.label+' ('+(nextShift.ts||'')+(nextShift.te?'-'+nextShift.te:'')+')'+(nextShift.ts?'':''),'#1C3D6E');
+    _rotaSelectCell(el);
+    el.focus();
   };
 
   window._rotaCellEdit=function(el){
@@ -394,8 +389,8 @@
         const bdr=isTd?'border:2px solid #1C3D6E;':'border:1px solid #e0e0e0;';
         const timeStr=entry.ts?(entry.ts+(entry.te?'-'+entry.te:'')):'';
         const sName=s.name.replace(/'/g,'');
-        const clickFn=isManager?'window._rotaCellEdit(this)':'window._rotaCellClick(this)';
-        return '<td id="cell_'+s.id+'_'+d+'" data-sid="'+s.id+'" data-day="'+d+'" data-sname="'+sName+'" onclick="'+clickFn+'" style="padding:3px 2px;text-align:center;min-width:36px;font-size:11px;font-weight:700;background:'+shift.bg+';color:'+shift.tc+';cursor:pointer;'+bdr+'vertical-align:top">'
+        const clickFn='window._rotaCellClick(this,event)'; const editFn='window._rotaCellEdit(this)';
+        return '<td id="cell_'+s.id+'_'+d+'" data-sid="'+s.id+'" data-day="'+d+'" data-sname="'+sName+'" onclick="'+clickFn+'" oncontextmenu="window._rotaContextMenu(this,event);return false;" onkeydown="window._rotaKeydown(this,event)" tabindex="0" style="padding:3px 2px;text-align:center;min-width:36px;font-size:11px;font-weight:700;background:'+shift.bg+';color:'+shift.tc+';cursor:pointer;'+bdr+'vertical-align:top">'
           +'<div>'+val+'</div>'+(timeStr?'<div class="cell-time" style="font-size:8px;font-weight:400;opacity:.8">'+timeStr+'</div>':'')
           +'</td>';
       }).join('');
@@ -639,6 +634,217 @@
     const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download='rota-'+currentHome.replace(/\s/g,'_')+'-'+monthName.replace(/\s/g,'-')+'.csv';a.click();URL.revokeObjectURL(url);
     showToast('Rota exported','#28a745');
+  };
+
+
+  // =================================================================
+  // ROTA UX IMPROVEMENTS: Context menu, keyboard shortcuts, copy-paste
+  // =================================================================
+
+  // Inject CSS once for selection highlight and menus
+  (function injectRotaUXStyles(){
+    if (document.getElementById('rota-ux-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'rota-ux-styles';
+    s.textContent =
+      '.rota-selected{outline:2px solid #1565c0!important;outline-offset:-2px;box-shadow:inset 0 0 0 2px #1565c0;z-index:2}' +
+      '.rota-copied-cell{outline:2px dashed #f57c00!important;outline-offset:-2px}' +
+      '#rota-ux-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1565c0;color:#fff;padding:8px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}' +
+      '#rota-ux-toast.show{opacity:1}' +
+      '.rota-ctx{position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:9999;min-width:190px;padding:4px 0;font-size:13px}' +
+      '.rota-ctx-item{padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#333}' +
+      '.rota-ctx-item:hover{background:#f0f4ff}' +
+      '.rota-ctx-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;border:1px solid #ccc}' +
+      '.rota-ctx-sep{height:1px;background:#eee;margin:3px 0}' +
+      '.rota-kbd-hint{position:fixed;top:10px;right:16px;background:rgba(0,0,0,.7);color:#fff;padding:6px 12px;border-radius:6px;font-size:11px;z-index:9998;opacity:0;pointer-events:none;transition:opacity .2s;line-height:1.6}' +
+      '.rota-kbd-hint.show{opacity:1}';
+    document.head.appendChild(s);
+    const t = document.createElement('div');
+    t.id = 'rota-ux-toast';
+    document.body.appendChild(t);
+  })();
+
+  function _uxToast(msg, ms) {
+    const t = document.getElementById('rota-ux-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._tmr);
+    t._tmr = setTimeout(() => t.classList.remove('show'), ms||2400);
+  }
+
+  // --- Right-click context menu ---
+  window._rotaContextMenu = function(cell, evt) {
+    evt.preventDefault();
+    const old = document.getElementById('rota-ctx-menu');
+    if (old) old.remove();
+    _rotaSelectCell(cell);
+    cell.focus();
+
+    const sid = cell.dataset.sid;
+    const day = parseInt(cell.dataset.day);
+    const rKey = sid + '_' + day;
+    const entry = rotaData[rKey] || {key:'', ts:'', te:'', notes:''};
+
+    const menu = document.createElement('div');
+    menu.className = 'rota-ctx';
+    menu.id = 'rota-ctx-menu';
+
+    // Shift options
+    SHIFTS.forEach(sh => {
+      const item = document.createElement('div');
+      item.className = 'rota-ctx-item';
+      const dot = document.createElement('span');
+      dot.className = 'rota-ctx-dot';
+      dot.style.background = sh.bg;
+      const lbl = document.createElement('span');
+      const shLabel = sh.key ? sh.key + ' — ' + sh.label : 'Off';
+      lbl.textContent = shLabel;
+      if (entry.key === sh.key) { lbl.style.fontWeight = '700'; item.style.background = '#f0f4ff'; }
+      item.appendChild(dot);
+      item.appendChild(lbl);
+      if (sh.key) {
+        const hint = document.createElement('span');
+        hint.textContent = sh.key;
+        hint.style.cssText = 'margin-left:auto;font-size:10px;opacity:.5;font-family:monospace';
+        item.appendChild(hint);
+      }
+      item.onclick = async () => {
+        menu.remove();
+        if (sh.key === 'C') { window._rotaCellEdit(cell); return; }
+        await _rotaApplyShift(cell, sh.key, sh.ts||'', sh.te||'', entry.notes||'');
+      };
+      menu.appendChild(item);
+    });
+
+    const sep1 = document.createElement('div'); sep1.className = 'rota-ctx-sep'; menu.appendChild(sep1);
+
+    // Copy
+    const cItem = document.createElement('div');
+    cItem.className = 'rota-ctx-item';
+    cItem.innerHTML = '<span style="font-size:14px">📋</span><span>Copy shift</span><span style="margin-left:auto;font-size:10px;opacity:.5">Ctrl+C</span>';
+    cItem.onclick = () => { menu.remove(); _rotaCopyCell(cell); };
+    menu.appendChild(cItem);
+
+    // Paste (if clipboard has data)
+    if (_clipCell) {
+      const pItem = document.createElement('div');
+      pItem.className = 'rota-ctx-item';
+      const sh = SHIFTS.find(s=>s.key===_clipCell.key)||SHIFTS[0];
+      pItem.innerHTML = '<span style="font-size:14px">📌</span><span>Paste: <b>' + (sh.label||'Off') + '</b></span><span style="margin-left:auto;font-size:10px;opacity:.5">Ctrl+V</span>';
+      pItem.onclick = async () => { menu.remove(); await _rotaPasteToCell(cell); };
+      menu.appendChild(pItem);
+    }
+
+    const sep2 = document.createElement('div'); sep2.className = 'rota-ctx-sep'; menu.appendChild(sep2);
+
+    // Edit modal
+    const eItem = document.createElement('div');
+    eItem.className = 'rota-ctx-item';
+    eItem.innerHTML = '<span style="font-size:14px">✏️</span><span>Edit / custom hours…</span><span style="margin-left:auto;font-size:10px;opacity:.5">Enter</span>';
+    eItem.onclick = () => { menu.remove(); window._rotaCellEdit(cell); };
+    menu.appendChild(eItem);
+
+    const x = Math.min(evt.clientX, window.innerWidth - 210);
+    const y = Math.min(evt.clientY, window.innerHeight - 60 - SHIFTS.length * 35);
+    menu.style.left = x + 'px';
+    menu.style.top = Math.max(10, y) + 'px';
+    document.body.appendChild(menu);
+
+    const closeCtx = (e) => {
+      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('mousedown', closeCtx, true); }
+    };
+    setTimeout(() => document.addEventListener('mousedown', closeCtx, true), 30);
+  };
+
+  // --- Copy / Paste ---
+  function _rotaCopyCell(cell) {
+    const sid = cell.dataset.sid;
+    const day = parseInt(cell.dataset.day);
+    const rKey = sid + '_' + day;
+    const entry = rotaData[rKey] || {key:'', ts:'', te:'', notes:''};
+    const sh = SHIFTS.find(s=>s.key===entry.key)||SHIFTS[0];
+    _clipCell = { sid, day, key: entry.key, ts: entry.time_start||entry.ts||sh.ts||'', te: entry.time_end||entry.te||sh.te||'', notes: entry.notes||'', label: sh.label };
+    // Mark cell
+    document.querySelectorAll('.rota-copied-cell').forEach(e => e.classList.remove('rota-copied-cell'));
+    cell.classList.add('rota-copied-cell');
+    _uxToast('📋 Copied: ' + (sh.label||'Off') + ' — Ctrl+click cells or Ctrl+V to paste');
+  }
+
+  async function _rotaPasteToCell(cell) {
+    if (!_clipCell) { _uxToast('Nothing copied yet — right-click a cell and choose Copy'); return; }
+    const sh = SHIFTS.find(s=>s.key===_clipCell.key)||SHIFTS[0];
+    await _rotaApplyShift(cell, _clipCell.key, _clipCell.ts||sh.ts||'', _clipCell.te||sh.te||'', _clipCell.notes||'');
+    _uxToast('📌 Pasted: ' + (sh.label||'Off'));
+  }
+
+  // --- Apply shift + re-render cell ---
+  async function _rotaApplyShift(cell, shKey, ts, te, notes) {
+    const sid = cell.dataset.sid;
+    const day = parseInt(cell.dataset.day);
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth() + 1;
+    await saveRotaCell(currentHome, sid, y, m, day, shKey, ts, te, notes||'');
+    const rKey = sid + '_' + day;
+    rotaData[rKey] = { key: shKey, shift_key: shKey, time_start: ts, time_end: te, notes: notes||'' };
+    const sh = SHIFTS.find(s=>s.key===shKey) || SHIFTS[0];
+    const timeStr = (shKey==='C'&&ts) ? ts+(te?'–'+te:'') : (sh.ts&&sh.te ? sh.ts+'–'+sh.te : '');
+    cell.style.background = sh.bg || '#f5f5f5';
+    cell.style.color = sh.tc || '#333';
+    if (shKey) {
+      const dispKey = shKey==='C'&&ts ? ts+(te?'–'+te:'') : shKey;
+      cell.innerHTML = '<div style="font-weight:700;font-size:12px;line-height:1.2">' + dispKey + '</div>'
+        + (timeStr&&shKey!=='C' ? '<div style="font-size:10px;opacity:.7">' + timeStr + '</div>' : '')
+        + (shKey==='C' ? '<div style="font-size:10px;opacity:.7">Custom</div>' : '');
+    } else {
+      cell.innerHTML = '';
+      cell.style.background = '#f5f5f5';
+      cell.style.color = '#999';
+    }
+    if (typeof tcaHrsCell === 'function') setTimeout(tcaHrsCell, 50);
+  }
+
+  // --- Keyboard handler ---
+  window._rotaKeydown = async function(cell, evt) {
+    const k = evt.key;
+    const ku = k.toUpperCase();
+    // Ctrl+C = copy
+    if (evt.ctrlKey && ku === 'C') { evt.preventDefault(); _rotaCopyCell(cell); return; }
+    // Ctrl+V = paste
+    if (evt.ctrlKey && ku === 'V') { evt.preventDefault(); await _rotaPasteToCell(cell); return; }
+    // Delete / Backspace = clear
+    if (k === 'Delete' || k === 'Backspace') { evt.preventDefault(); await _rotaApplyShift(cell,'','','',''); return; }
+    // Enter / Space = open modal
+    if (k === 'Enter' || k === ' ') { evt.preventDefault(); window._rotaCellEdit(cell); return; }
+    // Arrow keys = navigate
+    if (k==='ArrowLeft'||k==='ArrowRight'||k==='ArrowUp'||k==='ArrowDown') {
+      evt.preventDefault();
+      const sid = cell.dataset.sid;
+      const day = parseInt(cell.dataset.day);
+      const allIds = rotaStaff.map(s=>String(s.id));
+      const curIdx = allIds.indexOf(String(sid));
+      let nSid = sid, nDay = day;
+      if (k==='ArrowLeft') nDay = day-1;
+      else if (k==='ArrowRight') nDay = day+1;
+      else if (k==='ArrowUp') nSid = allIds[Math.max(0,curIdx-1)];
+      else if (k==='ArrowDown') nSid = allIds[Math.min(allIds.length-1,curIdx+1)];
+      const t = document.getElementById('cell_'+nSid+'_'+nDay);
+      if (t) { _rotaSelectCell(t); t.focus(); }
+      return;
+    }
+    // Letter shortcuts: E D L N S W A T X O C
+    const shiftByKey = {};
+    SHIFTS.forEach(s => { if(s.key) shiftByKey[s.key] = s; });
+    if (shiftByKey[ku] && !evt.ctrlKey && !evt.metaKey) {
+      evt.preventDefault();
+      const sh = shiftByKey[ku];
+      if (ku === 'C') { window._rotaCellEdit(cell); return; } // C = open modal for times
+      const sid = cell.dataset.sid;
+      const day = parseInt(cell.dataset.day);
+      const rKey = sid+'_'+day;
+      const entry = rotaData[rKey]||{};
+      await _rotaApplyShift(cell, sh.key, sh.ts||'', sh.te||'', entry.notes||'');
+    }
   };
 
   async function init(){
