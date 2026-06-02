@@ -1,4 +1,4 @@
-// ================================================================
+// ===============================================================
 // TCA Rota Module v3.0 — Supabase Backend + Custom Shifts + Open Shift Email
 // ================================================================
 (function() {
@@ -17,7 +17,8 @@
     {key:'A',label:'Annual Leave',bg:'#fce4ec',tc:'#880e4f',ts:'',te:''},
     {key:'T',label:'Training',bg:'#e3f2fd',tc:'#0d47a1',ts:'',te:''},
     {key:'X',label:'Taxi',bg:'#fff3e0',tc:'#5d4037',ts:'',te:''},
-    {key:'O',label:'Off Sick',bg:'#ffebee',tc:'#b71c1c',ts:'',te:''}
+    {key:'O',label:'Off Sick',bg:'#ffebee',tc:'#b71c1c',ts:'',te:''},
+  {key:'C',label:'Custom',bg:'#e3f2fd',tc:'#0d47a1',ts:'',te:''}
   ];
   let SHIFTS=[...DEFAULT_SHIFTS];
   let currentHome=HOMES[0];
@@ -62,10 +63,10 @@
     }catch(ex){return{};}
   }
 
-  async function saveRotaCell(home,staffId,y,m,d,shiftKey,ts,te,notes){
+  async function saveRotaCell(home,staffId,y,m,d,shiftKey,ts,te,notes,customTs,customTe){
     try{
       const dateStr=fmtDate(y,m,d);
-      const payload={home,staff_id:staffId,date:dateStr,shift_key:shiftKey,time_start:ts||'',time_end:te||'',notes:notes||'',is_open_shift:false,updated_at:new Date().toISOString()};
+      const payload={home,staff_id:staffId,date:dateStr,shift_key:shiftKey,time_start:(customTs||ts)||'',time_end:(customTe||te)||'',notes:notes||'',is_open_shift:false,updated_at:new Date().toISOString()};
       await fetch(SURL+'/rest/v1/rota_entries',{method:'POST',headers:Object.assign({'Prefer':'resolution=merge-duplicates,return=minimal'},sbH()),body:JSON.stringify(payload)});
     }catch(e){console.error('saveRotaCell error:',e);}
   }
@@ -112,13 +113,27 @@
       +'<h3 style="margin:0 0 4px;color:#1C3D6E;font-size:15px">&#x270F; Edit Shift</h3>'
       +'<div style="font-size:12px;color:#888;margin-bottom:16px">'+staffName+' &mdash; '+dateStr+'</div>'
       +'<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Shift Type</label>'
-      +'<select id="rce-shift" onchange="var o=this.options[this.selectedIndex];document.getElementById(\'rce-ts\').value=o.dataset.ts||\'\';document.getElementById(\'rce-te\').value=o.dataset.te||\'\';" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:12px;box-sizing:border-box">'+shiftOpts+'</select>'
+      +'<select id="rce-shift" onchange="var o=this.options[this.selectedIndex];document.getElementById(\'rce-ts\').value=o.dataset.ts||\'\';document.getElementById(\'rce-te\').value=o.dataset.te||\'\';document.getElementById('rce-custom-row').style.display=this.value==='C'?'table-row':'none';" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:12px;box-sizing:border-box">'+shiftOpts+'</select>'
+    <tr id='rce-custom-row' style='display:'+(cur&&cur.key==='C'?'table-row':'none')+'><td style='padding:4px 8px;font-size:12px;color:#555;font-weight:600'>Custom hours</td><td colspan='2' style='padding:4px'><input type='time' id='rce-custom-ts' value='+(cur&&cur.key==='C'?cur.ts||'':'')+'  style='padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;width:110px'> <span style='color:#64748b;font-size:12px'>to</span> <input type='time' id='rce-custom-te' value='+(cur&&cur.key==='C'?cur.te||'':'')+'  style='padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;width:110px'></td></tr>
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
       +'<div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Start Time</label><input type="time" id="rce-ts" value="'+(cur?cur.ts||'':'')+'" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
       +'<div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">End Time</label><input type="time" id="rce-te" value="'+(cur?cur.te||'':'')+'" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
       +'</div>'
       +'<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Notes</label>'
       +'<input type="text" id="rce-notes" value="'+(cur?cur.notes||'':'')+'" placeholder="Optional note..." style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:14px;box-sizing:border-box">'
+    <tr><td colspan='3' style='padding:6px 8px 2px;font-size:12px;font-weight:600;color:#374151;border-top:1px solid #e5e7eb'>Copy shift to:</td></tr>
+    <tr id='rce-copy-row'><td colspan='3' style='padding:2px 8px 8px'>
+      <div style='display:flex;gap:6px;flex-wrap:wrap'>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-mon' value='1'> Mon</label>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-tue' value='2'> Tue</label>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-wed' value='3'> Wed</label>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-thu' value='4'> Thu</label>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-fri' value='5'> Fri</label>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-sat' value='6'> Sat</label>
+        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-sun' value='0'> Sun</label>
+      </div>
+      <div style='margin-top:4px;font-size:11px;color:#6b7280'>Tick days to copy this shift to other days in the same week</div>
+    </td></tr>
       +'<div style="background:#f0f7ff;border-radius:8px;padding:12px;margin-bottom:14px">'
       +'<div style="font-size:12px;font-weight:700;color:#1C3D6E;margin-bottom:8px">&#x1F4CB; Apply to Date Range</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
@@ -170,6 +185,8 @@
     const ts=document.getElementById('rce-ts').value;
     const te=document.getElementById('rce-te').value;
     const notes=document.getElementById('rce-notes').value;
+      const customTs = shiftKey === 'C' ? (document.getElementById('rce-custom-ts')||{}).value||'' : '';
+      const customTe = shiftKey === 'C' ? (document.getElementById('rce-custom-te')||{}).value||'' : '';
     const fromDay=parseInt((document.getElementById('rce-from')||{}).value)||origDay;
     const toDay=parseInt((document.getElementById('rce-to')||{}).value)||origDay;
     const shift=SHIFTS.find(s=>s.key===shiftKey)||SHIFTS[0];
@@ -191,7 +208,24 @@
         if(sub)sub.textContent=ts?(ts+(te?'-'+te:'')):'';
         else if(sub)sub.textContent='';
       }
-      savePromises.push(saveRotaCell(currentHome,staffId,y,m,d,shiftKey,ts,te,notes));
+
+      // Handle copy-to-day checkboxes
+      const copyDayNames = ['mon','tue','wed','thu','fri','sat','sun'];
+      const copyDayVals = [1,2,3,4,5,6,0];
+      const origDateObj = new Date(y, m-1, d);
+      copyDayNames.forEach(function(dn, idx) {
+        const cb = document.getElementById('rce-copy-' + dn);
+        if (!cb || !cb.checked) return;
+        const targetDow = copyDayVals[idx];
+        const diff = targetDow - origDateObj.getDay();
+        const copyDate = new Date(y, m-1, d + diff);
+        const cy = copyDate.getFullYear();
+        const cm2 = copyDate.getMonth() + 1;
+        const cd = copyDate.getDate();
+        const copyKey = cy + '-' + (cm2<10?'0'+cm2:cm2) + '-' + (cd<10?'0'+cd:cd);
+        if (!savedDays.includes(copyKey)) savedDays.push(copyKey);
+      });
+      savePromises.push(saveRotaCell(currentHome,staffId,y,m,d,shiftKey,ts,te,notes),customTs,customTe);
       savedDays.push(d);
     }
     await Promise.all(savePromises);
@@ -211,7 +245,7 @@
     const rows=DEFAULT_SHIFTS.filter(s=>s.key).map(ds=>{
       const p=sp.find(x=>x.shift_key===ds.key)||ds;
       const ts=p.time_start||p.ts||'';const te=p.time_end||p.te||'';
-      return '<tr><td style="padding:8px 10px;font-size:12px;font-weight:600"><span style="background:'+ds.bg+';color:'+ds.tc+';padding:2px 8px;border-radius:10px">'+ds.key+'</span> '+ds.label+'</td>'
+      return '<tr><td style="padding:8px 10px;font-size:12px;font-weight:600"><span style="background:'+ds.bg+';color:'+ds.tc+';padding:2px 8px;border-radius:10px">'+ds.key+'</span> '+(ds.key==='C'&&ts?(ts+(te?'–'+te:'')):(ds.label||ds.key||'?'))+'</td>'
         +'<td style="padding:8px 6px"><input type="time" class="sp-ts" data-key="'+ds.key+'" value="'+ts+'" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;width:90px"></td>'
         +'<td style="padding:8px 6px"><input type="time" class="sp-te" data-key="'+ds.key+'" value="'+te+'" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;width:90px"></td>'
         +'</tr>';
