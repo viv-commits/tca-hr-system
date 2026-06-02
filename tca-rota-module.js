@@ -113,27 +113,27 @@
       +'<h3 style="margin:0 0 4px;color:#1C3D6E;font-size:15px">&#x270F; Edit Shift</h3>'
       +'<div style="font-size:12px;color:#888;margin-bottom:16px">'+staffName+' &mdash; '+dateStr+'</div>'
       +'<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Shift Type</label>'
-      +'<select id="rce-shift" onchange="var o=this.options[this.selectedIndex];document.getElementById(\'rce-ts\').value=o.dataset.ts||\'\';document.getElementById(\'rce-te\').value=o.dataset.te||\'\';document.getElementById('rce-custom-row').style.display=this.value==='C'?'table-row':'none';" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:12px;box-sizing:border-box">'+shiftOpts+'</select>'
-    <tr id='rce-custom-row' style='display:'+(cur&&cur.key==='C'?'table-row':'none')+'><td style='padding:4px 8px;font-size:12px;color:#555;font-weight:600'>Custom hours</td><td colspan='2' style='padding:4px'><input type='time' id='rce-custom-ts' value='+(cur&&cur.key==='C'?cur.ts||'':'')+'  style='padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;width:110px'> <span style='color:#64748b;font-size:12px'>to</span> <input type='time' id='rce-custom-te' value='+(cur&&cur.key==='C'?cur.te||'':'')+'  style='padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;width:110px'></td></tr>
+      +'<select id="rce-shift" onchange="var o=this.options[this.selectedIndex];document.getElementById(\'rce-ts\').value=o.dataset.ts||\'\';document.getElementById(\'rce-te\').value=o.dataset.te||\'\';document.getElementById(\'rce-custom-row\').style.display=this.value===\'C\'?\'table-row\':\'none\';" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:12px;box-sizing:border-box">'+shiftOpts+'</select>'
+      +"<tr id='rce-custom-row' style='display:'+(cur&&cur.key==='C'?'table-row':'none')+'><td style='padding:4px 8px;font-size:12px;color:#555;font-weight:600'>Custom hours</td><td colspan='2' style='padding:4px'><input type='time' id='rce-custom-ts' value='+(cur&&cur.key==='C'?cur.ts||'':'')+'  style='padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;width:110px'> <span style='color:#64748b;font-size:12px'>to</span> <input type='time' id='rce-custom-te' value='+(cur&&cur.key==='C'?cur.te||'':'')+'  style='padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;width:110px'></td></tr>"
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
       +'<div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Start Time</label><input type="time" id="rce-ts" value="'+(cur?cur.ts||'':'')+'" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
       +'<div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">End Time</label><input type="time" id="rce-te" value="'+(cur?cur.te||'':'')+'" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
       +'</div>'
       +'<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Notes</label>'
       +'<input type="text" id="rce-notes" value="'+(cur?cur.notes||'':'')+'" placeholder="Optional note..." style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:14px;box-sizing:border-box">'
-    <tr><td colspan='3' style='padding:6px 8px 2px;font-size:12px;font-weight:600;color:#374151;border-top:1px solid #e5e7eb'>Copy shift to:</td></tr>
-    <tr id='rce-copy-row'><td colspan='3' style='padding:2px 8px 8px'>
-      <div style='display:flex;gap:6px;flex-wrap:wrap'>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-mon' value='1'> Mon</label>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-tue' value='2'> Tue</label>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-wed' value='3'> Wed</label>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-thu' value='4'> Thu</label>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-fri' value='5'> Fri</label>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-sat' value='6'> Sat</label>
-        <label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-sun' value='0'> Sun</label>
-      </div>
-      <div style='margin-top:4px;font-size:11px;color:#6b7280'>Tick days to copy this shift to other days in the same week</div>
-    </td></tr>
+      +"<tr><td colspan='3' style='padding:6px 8px 2px;font-size:12px;font-weight:600;color:#374151;border-top:1px solid #e5e7eb'>Copy shift to:</td></tr>"
+      +"<tr id='rce-copy-row'><td colspan='3' style='padding:2px 8px 8px'>"
+      +"<div style='display:flex;gap:6px;flex-wrap:wrap'>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-mon' value='1'> Mon</label>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-tue' value='2'> Tue</label>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-wed' value='3'> Wed</label>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-thu' value='4'> Thu</label>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-fri' value='5'> Fri</label>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-sat' value='6'> Sat</label>"
+      +"<label style='display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer'><input type='checkbox' id='rce-copy-sun' value='0'> Sun</label>"
+      +"</div>"
+      +"<div style='margin-top:4px;font-size:11px;color:#6b7280'>Tick days to copy this shift to other days in the same week</div>"
+      +"</td></tr>"
       +'<div style="background:#f0f7ff;border-radius:8px;padding:12px;margin-bottom:14px">'
       +'<div style="font-size:12px;font-weight:700;color:#1C3D6E;margin-bottom:8px">&#x1F4CB; Apply to Date Range</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
